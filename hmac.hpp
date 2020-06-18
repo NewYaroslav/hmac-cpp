@@ -1,8 +1,8 @@
 #ifndef HMAC_HPP_INCLUDED
 #define HMAC_HPP_INCLUDED
 
-#include <sha512.hpp>
-#include <sha256.hpp>
+#include "sha256.hpp"
+#include "sha512.hpp"
 #include <string>
 
 namespace hmac {
