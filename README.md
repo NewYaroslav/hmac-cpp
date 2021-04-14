@@ -34,11 +34,11 @@ int main() {
 	std::string input("grape");
 	std::string key("12345");
 	
-	/* проверяем работу HMAC SHA256 */
+    /* проверяем работу HMAC SHA256 */
     std::string output1 = hmac::get_hmac(key, input, hmac::TypeHash::SHA256);
     std::cout << "get_hmac('"<< key << "','" << input << "',SHA256): " << output1 << std::endl;
     std::cout << "The answer should be: "
-        "7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca"
+		"7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca"
         << std::endl << std::endl;
 
     /* проверяем работу HMAC SHA512 */
