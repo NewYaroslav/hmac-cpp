@@ -35,42 +35,38 @@
  * SUCH DAMAGE.
  */
 
-/* Оригинал кода: http://www.zedwood.com/article/cpp-sha256-function
- * Исправления: 18.06.2020 Elektro Yar
+/* Based on: http://www.zedwood.com/article/cpp-sha256-function
+ * Modified by Elektro Yar, 2020-06-18
  */
-
-#ifndef SHA256_HPP_INCLUDED
-#define SHA256_HPP_INCLUDED
+ 
+#ifndef _HMAC_SHA256_HPP_INCLUDED
+#define _HMAC_SHA256_HPP_INCLUDED
 
 #include <string>
 
 namespace hmac_hash {
 
-    /** \brief Класс для расчета SHA256
-     */
+    /// \brief Class for computing SHA256 hash
     class SHA256 {
     protected:
         const static uint32_t sha256_k[];
 
     public:
 
-        /** \brief Инициализировать SHA256
-         */
+        /// \brief Initializes SHA256 context
         void init();
 
-        /** \brief Обновить SHA256
-         * \param message Новое сообщение, которое добавляем для расчета SHA256
-         * \param length Длина сообщения
-         */
+        /// \brief Updates SHA256 with new message data
+		/// \param message Pointer to input data
+		/// \param length Length of input data
         void update(const uint8_t *message, const size_t length);
 
-        /** \brief Результат SHA256
-         * \param digest Результат расчета SHA256, занимает DIGEST_SIZE байт.
-         */
+        /// \brief Finalizes SHA256 and produces the hash
+		/// \param digest Output buffer of size DIGEST_SIZE
         void final(uint8_t *digest);
 
-        static const size_t DIGEST_SIZE = ( 256 / 8);
-        static const size_t SHA224_256_BLOCK_SIZE = (512/8);
+        static const size_t DIGEST_SIZE = ( 256 / 8); 		 ///< Digest size in bytes
+        static const size_t SHA224_256_BLOCK_SIZE = (512/8); ///< Block size in bytes
 
     protected:
         void transform(const uint8_t *message, const size_t block_nb);
@@ -80,11 +76,10 @@ namespace hmac_hash {
         uint32_t m_h[8];
     };
 
-    /** \brief Посчитать SHA256 для строки
-     * \param input Строка, для которой счтаем хеш
-     * \return Хеш в виде строки
-     */
+    /// \brief Computes SHA256 hash of a string
+	/// \param input Input string
+	/// \return Hash as a binary string
     std::string sha256(const std::string &input);
 }
 
-#endif // SHA256_HPP_INCLUDED
+#endif // _HMAC_SHA256_HPP_INCLUDED

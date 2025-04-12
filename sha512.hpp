@@ -35,45 +35,41 @@
  * SUCH DAMAGE.
  */
 
-/* Оригинал кода: http://www.zedwood.com/article/cpp-sha512-function
- * Исправления: 18.06.2020 Elektro Yar
+/* Based on: http://www.zedwood.com/article/cpp-sha512-function
+ * Modified by Elektro Yar, 2020-06-18
  */
 
-#ifndef SHA512_HPP_INCLUDED
-#define SHA512_HPP_INCLUDED
+#ifndef _HMAC_SHA512_HPP_INCLUDED
+#define _HMAC_SHA512_HPP_INCLUDED
 
 #include <string>
 
 namespace hmac_hash {
 
-    /** \brief Класс для расчета SHA512
-     * SHA-512 является самой большой хеш-функцией в семействе хеш-функций SHA-2.
-     * SHA-512 обеспечивает 256 бит безопасности для цифровых подписей
-     * и приложений только для хэширования.
-     */
+	/// \brief SHA512 hashing class
+    ///
+    /// SHA-512 is the largest hash function in the SHA-2 family.
+    /// It provides 256-bit security for digital signatures and hash-only applications.
     class SHA512 {
     protected:
         const static uint64_t sha512_k[];
 
     public:
 
-        /** \brief Инициализировать SHA512
-         */
+        /// \brief Initializes the SHA512 context
         void init();
 
-        /** \brief Обновить SHA512
-         * \param message Новое сообщение, которое добавляем для расчета SHA512
-         * \param length Длина сообщения
-         */
+        /// \brief Updates the SHA512 context with message data
+        /// \param message Pointer to the input data
+        /// \param length Length of the input data in bytes
         void update(const uint8_t *message, const size_t length);
 
-        /** \brief Результат SHA512
-         * \param digest Результат расчета SHA512, занимает DIGEST_SIZE байт.
-         */
+        /// \brief Finalizes the SHA512 computation
+        /// \param digest Output buffer of size DIGEST_SIZE
         void final(uint8_t *digest);
 
-        static const size_t DIGEST_SIZE = ( 512 / 8);
-        static const size_t SHA384_512_BLOCK_SIZE = (1024/8);
+        static const size_t DIGEST_SIZE = ( 512 / 8);         ///< Hash output size in bytes
+        static const size_t SHA384_512_BLOCK_SIZE = (1024/8); ///< Block size in bytes
 
     protected:
         void transform(const uint8_t *message, const size_t block_nb);
@@ -83,11 +79,10 @@ namespace hmac_hash {
         uint64_t m_h[8];
     };
 
-    /** \brief Посчитать SHA512 для строки
-     * \param input Строка, для которой счтаем хеш
-     * \return Хеш в виде строки
-     */
+    /// \brief Computes SHA512 hash for the given string
+    /// \param input Input string
+    /// \return Binary hash result as a std::string
     std::string sha512(const std::string &input);
 }
 
-#endif // SHA512_HPP_INCLUDED
+#endif // _HMAC_SHA512_HPP_INCLUDED
