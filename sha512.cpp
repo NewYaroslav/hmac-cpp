@@ -125,7 +125,7 @@ namespace hmac_hash {
                  0x4cc5d4becb3e42b6ULL, 0x597f299cfc657e2aULL,
                  0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL};
 
-    void SHA512::transform(const uint8_t *message, const size_t block_nb) {
+    void SHA512::transform(const uint8_t *message, size_t block_nb) {
         uint64_t w[80];
         uint64_t wv[8];
         uint64_t t1, t2;
@@ -174,7 +174,7 @@ namespace hmac_hash {
         m_tot_len = 0;
     }
 
-    void SHA512::update(const uint8_t *message, const size_t length) {
+    void SHA512::update(const uint8_t *message, size_t length) {
         size_t block_nb;
         size_t new_len, rem_len, tmp_len;
         const uint8_t *shifted_message;
@@ -196,13 +196,13 @@ namespace hmac_hash {
         m_tot_len += (block_nb + 1) << 7;
     }
 
-    void SHA512::final(uint8_t *digest) {
+    void SHA512::finish(uint8_t *digest) {
         size_t block_nb;
         size_t pm_len;
         size_t len_b;
         size_t i;
-        block_nb = 1 + ((SHA384_512_BLOCK_SIZE - 17)
-                         < (m_len % SHA384_512_BLOCK_SIZE));
+        block_nb = (1 + ((SHA384_512_BLOCK_SIZE - 17) 
+			< (m_len % SHA384_512_BLOCK_SIZE)));
         len_b = (m_tot_len + m_len) << 3;
         pm_len = block_nb << 7;
         memset(m_block + m_len, 0, pm_len - m_len);
@@ -213,20 +213,36 @@ namespace hmac_hash {
             SHA2_UNPACK64(m_h[i], &digest[i << 3]);
         }
     }
+	
+	void sha512(const void* data, size_t length, uint8_t* digest) {
+        hmac_hash::SHA512 ctx;
+        ctx.init();
+        ctx.update(reinterpret_cast<const uint8_t*>(data), length);
+        ctx.finish(digest);
+    }
+	
+	std::vector<uint8_t> sha512(const void* data, size_t length) {
+        std::vector<uint8_t> digest(hmac_hash::SHA512::DIGEST_SIZE);
+        hmac_hash::SHA512 ctx;
+        ctx.init();
+        ctx.update(reinterpret_cast<const uint8_t*>(data), length);
+        ctx.finish(digest.data());
+        return digest;
+    }
 
     std::string sha512(const std::string &input) {
-        uint8_t digest[SHA512::DIGEST_SIZE];
-        std::fill(digest, digest + SHA512::DIGEST_SIZE, '\0');
-        SHA512 ctx = SHA512();
+        uint8_t digest[hmac_hash::SHA512::DIGEST_SIZE];
+        std::fill(digest, digest + hmac_hash::SHA512::DIGEST_SIZE, '\0');
+        hmac_hash::SHA512 ctx;
         ctx.init();
         ctx.update((uint8_t*)input.c_str(), input.length());
-        ctx.final(digest);
+        ctx.finish(digest);
 
-        char buf[2 * SHA512::DIGEST_SIZE + 1];
-        std::fill(buf, buf + (2 * SHA512::DIGEST_SIZE + 1), '\0');
-        for(size_t i = 0; i < SHA512::DIGEST_SIZE; ++i){
+        char buf[2 * hmac_hash::SHA512::DIGEST_SIZE + 1];
+        std::fill(buf, buf + (2 * hmac_hash::SHA512::DIGEST_SIZE + 1), '\0');
+        for(size_t i = 0; i < hmac_hash::SHA512::DIGEST_SIZE; ++i){
             sprintf(buf + i * 2, "%02x", digest[i]);
         }
-        return std::string(buf, (2 * SHA512::DIGEST_SIZE));
+        return std::string(buf, (2 * hmac_hash::SHA512::DIGEST_SIZE));
     }
 }

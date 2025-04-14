@@ -8,6 +8,7 @@ option(BUILD_EXAMPLE "Build the example program" ON)
 
 set(HMAC_HEADERS
     hmac.hpp
+	hmac_timed_token.hpp
     sha256.hpp
     sha512.hpp
 )
@@ -15,6 +16,8 @@ set(HMAC_HEADERS
 set(HMAC_SOURCES
     sha256.cpp
     sha512.cpp
+	hmac.cpp
+	hmac_timed_token.cpp
 )
 
 add_library(hmac STATIC ${HMAC_SOURCES} ${HMAC_HEADERS})

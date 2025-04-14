@@ -86,7 +86,7 @@ namespace hmac_hash {
                  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
                  0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
 
-    void SHA256::transform(const uint8_t *message, const size_t block_nb) {
+    void SHA256::transform(const uint8_t *message, size_t block_nb) {
         uint32_t w[64];
         uint32_t wv[8];
         uint32_t t1, t2;
@@ -136,7 +136,7 @@ namespace hmac_hash {
         m_tot_len = 0;
     }
 
-    void SHA256::update(const unsigned char *message, const size_t length) {
+    void SHA256::update(const unsigned char *message, size_t length) {
         size_t block_nb;
         size_t new_len, rem_len, tmp_len;
         const uint8_t *shifted_message;
@@ -158,13 +158,13 @@ namespace hmac_hash {
         m_tot_len += (block_nb + 1) << 6;
     }
 
-    void SHA256::final(uint8_t *digest) {
+    void SHA256::finish(uint8_t *digest) {
         size_t block_nb;
         size_t pm_len;
         size_t len_b;
         size_t i;
-        block_nb = (1 + ((SHA224_256_BLOCK_SIZE - 9)
-                         < (m_len % SHA224_256_BLOCK_SIZE)));
+        block_nb = (1 + ((SHA224_256_BLOCK_SIZE - 9) 
+			< (m_len % SHA224_256_BLOCK_SIZE)));
         len_b = (m_tot_len + m_len) << 3;
         pm_len = block_nb << 6;
         memset(m_block + m_len, 0, pm_len - m_len);
@@ -176,20 +176,36 @@ namespace hmac_hash {
         }
     }
 
-    std::string sha256(const std::string &input) {
-        uint8_t digest[SHA256::DIGEST_SIZE];
-        std::fill(digest, digest + SHA256::DIGEST_SIZE, '\0');
+	void sha256(const void* data, size_t length, uint8_t* digest) {
+        hmac_hash::SHA256 ctx;
+        ctx.init();
+        ctx.update(reinterpret_cast<const uint8_t*>(data), length);
+        ctx.finish(digest);
+    }
+	
+	std::vector<uint8_t> sha256(const void* data, size_t length) {
+        std::vector<uint8_t> digest(hmac_hash::SHA256::DIGEST_SIZE);
+        hmac_hash::SHA256 ctx;
+        ctx.init();
+        ctx.update(reinterpret_cast<const uint8_t*>(data), length);
+        ctx.finish(digest.data());
+        return digest;
+    }
 
-        SHA256 ctx = SHA256();
+    std::string sha256(const std::string &input) {
+        uint8_t digest[hmac_hash::SHA256::DIGEST_SIZE];
+        std::fill(digest, digest + hmac_hash::SHA256::DIGEST_SIZE, '\0');
+
+        hmac_hash::SHA256 ctx;
         ctx.init();
         ctx.update((uint8_t*)input.c_str(), input.length());
-        ctx.final(digest);
+        ctx.finish(digest);
 
-        char buf[2 * SHA256::DIGEST_SIZE + 1];
-        std::fill(buf, buf + (2 * SHA256::DIGEST_SIZE + 1), '\0');
-        for(size_t i = 0; i < SHA256::DIGEST_SIZE; ++i) {
+        char buf[2 * hmac_hash::SHA256::DIGEST_SIZE + 1];
+        std::fill(buf, buf + (2 * hmac_hash::SHA256::DIGEST_SIZE + 1), '\0');
+        for(size_t i = 0; i < hmac_hash::SHA256::DIGEST_SIZE; ++i) {
             sprintf(buf + i * 2, "%02x", digest[i]);
         }
-        return std::string(buf, (2 * SHA256::DIGEST_SIZE));
+        return std::string(buf, (2 * hmac_hash::SHA256::DIGEST_SIZE));
     }
 }

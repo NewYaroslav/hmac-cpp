@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include "hmac.hpp"
+#include "hmac_timed_token.hpp"
 
 void print_section(const std::string& title) {
     std::cout << "=== " << title << " ===" << std::endl;
@@ -44,6 +45,22 @@ int main() {
     std::string hmac_sha512_upper = hmac::get_hmac(key, input, hmac::TypeHash::SHA512, true, true);
     std::cout << "HMAC('" << key << "', '" << input << "', SHA512, hex=true, upper=true) = " << hmac_sha512_upper << std::endl;
 
+	// HMAC TIME TOKEN
+    print_section("HMAC-TIMED TOKEN");
+    std::string time_token = hmac::generate_time_token(key, 60);
+    std::cout << "Time token (now) = " << time_token << std::endl;
+    bool valid = hmac::is_token_valid(time_token, key, 60);
+    std::cout << "Token valid? = " << (valid ? "YES" : "NO") << std::endl;
+
+    // HMAC TIME TOKEN + fingerprint
+    print_section("HMAC-TIMED TOKEN (with fingerprint)");
+    std::string fingerprint = "my-client-unique-id";
+    std::string timed_token = hmac::generate_time_token(key, fingerprint, 60);
+    std::cout << "Fingerprint = " << fingerprint << std::endl;
+    std::cout << "Token = " << timed_token << std::endl;
+    bool valid_fp = hmac::is_token_valid(timed_token, key, fingerprint, 60);
+    std::cout << "Token valid (with fingerprint)? = " << (valid_fp ? "YES" : "NO") << std::endl;
+	
 	// Pause before exit
     std::cout << "\nPress Enter to exit...";
     std::cin.get();

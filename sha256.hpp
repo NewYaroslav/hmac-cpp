@@ -43,6 +43,7 @@
 #define _HMAC_SHA256_HPP_INCLUDED
 
 #include <string>
+#include <vector>
 
 namespace hmac_hash {
 
@@ -59,27 +60,60 @@ namespace hmac_hash {
         /// \brief Updates SHA256 with new message data
 		/// \param message Pointer to input data
 		/// \param length Length of input data
-        void update(const uint8_t *message, const size_t length);
+        void update(const uint8_t *message, size_t length);
 
         /// \brief Finalizes SHA256 and produces the hash
 		/// \param digest Output buffer of size DIGEST_SIZE
-        void final(uint8_t *digest);
+        void finish(uint8_t *digest);
 
         static const size_t DIGEST_SIZE = ( 256 / 8); 		 ///< Digest size in bytes
         static const size_t SHA224_256_BLOCK_SIZE = (512/8); ///< Block size in bytes
 
     protected:
-        void transform(const uint8_t *message, const size_t block_nb);
+        void transform(const uint8_t *message, size_t block_nb);
         size_t m_tot_len;
         size_t m_len;
         uint8_t m_block[2 * SHA224_256_BLOCK_SIZE];
         uint32_t m_h[8];
     };
+	
+	/// \brief Computes SHA256 hash of a raw byte buffer
+    /// \param data Pointer to input data
+    /// \param length Length of the input data
+    /// \param digest Output buffer of size SHA256::DIGEST_SIZE
+    void sha256(const void* data, size_t length, uint8_t* digest);
 
-    /// \brief Computes SHA256 hash of a string
+	/// \brief Computes SHA256 hash of a raw byte buffer
+    /// \param data Pointer to input data
+    /// \param length Length of the input data
+    /// \return Vector containing the SHA256 digest
+    std::vector<uint8_t> sha256(const void* data, size_t length);
+	
+	/// \brief Computes SHA256 hash of a string
 	/// \param input Input string
 	/// \return Hash as a binary string
     std::string sha256(const std::string &input);
+	
+	/// \brief Computes SHA256 hash of a vector of bytes
+    /// \tparam T Type of the vector element (char or uint8_t)
+    /// \param input Input vector
+    /// \return Vector with SHA256 digest
+    template<typename T>
+    std::vector<uint8_t> sha256(const std::vector<T>& input) {
+        static_assert(std::is_same<T, char>::value || std::is_same<T, uint8_t>::value,
+                      "sha256(vector<T>) only supports vector<char> or vector<uint8_t>");
+
+        uint8_t digest[hmac_hash::SHA256::DIGEST_SIZE];
+        std::fill(digest, digest + hmac_hash::SHA256::DIGEST_SIZE, 0);
+
+        hmac_hash::SHA256 ctx;
+        ctx.init();
+        ctx.update(reinterpret_cast<const uint8_t*>(input.data()), input.size());
+        ctx.finish(digest);
+
+        return std::vector<uint8_t>(digest, digest + hmac_hash::SHA256::DIGEST_SIZE);
+    }
+
 }
 
 #endif // _HMAC_SHA256_HPP_INCLUDED
