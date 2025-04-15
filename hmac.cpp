@@ -18,6 +18,15 @@ namespace hmac {
 
     std::string get_hash(const std::string &input, TypeHash type) {
         switch(type) {
+			case TypeHash::SHA1: {
+                uint8_t digest[hmac_hash::SHA1::DIGEST_SIZE];
+                std::fill(digest, digest + hmac_hash::SHA1::DIGEST_SIZE, '\0');
+                hmac_hash::SHA1 ctx = hmac_hash::SHA1();
+                ctx.init();
+                ctx.update((uint8_t*)input.c_str(), input.size());
+                ctx.finish(digest);
+                return std::string((const char*)digest, hmac_hash::SHA1::DIGEST_SIZE);
+            }
             case TypeHash::SHA256: {
                 uint8_t digest[hmac_hash::SHA256::DIGEST_SIZE];
                 std::fill(digest, digest + hmac_hash::SHA256::DIGEST_SIZE, '\0');
@@ -43,6 +52,14 @@ namespace hmac {
 
     std::vector<uint8_t> get_hash(const void* data, size_t length, TypeHash type) {
         switch(type) {
+			case TypeHash::SHA1: {
+                std::vector<uint8_t> digest(hmac_hash::SHA1::DIGEST_SIZE);
+                hmac_hash::SHA1 ctx;
+                ctx.init();
+                ctx.update(reinterpret_cast<const uint8_t*>(data), length);
+                ctx.finish(digest.data());
+                return digest;
+            }
             case TypeHash::SHA256: {
                 std::vector<uint8_t> digest(hmac_hash::SHA256::DIGEST_SIZE);
                 hmac_hash::SHA256 ctx;
@@ -68,6 +85,10 @@ namespace hmac {
         size_t digest_size = 0;
 
         switch (type) {
+			case TypeHash::SHA1:
+                block_size = hmac_hash::SHA1::BLOCK_SIZE;
+                digest_size = hmac_hash::SHA1::DIGEST_SIZE;
+                break;
             case TypeHash::SHA256:
                 block_size = hmac_hash::SHA256::SHA224_256_BLOCK_SIZE;
                 digest_size = hmac_hash::SHA256::DIGEST_SIZE;
@@ -115,6 +136,9 @@ namespace hmac {
     std::string get_hmac(const std::string& key_input, const std::string &msg, TypeHash type, bool is_hex, bool is_upper) {
         size_t block_size = 0;
         switch(type) {
+		case TypeHash::SHA1:
+            block_size = hmac_hash::SHA1::BLOCK_SIZE;
+            break;
         case TypeHash::SHA256:
             block_size = hmac_hash::SHA256::SHA224_256_BLOCK_SIZE;
             break;

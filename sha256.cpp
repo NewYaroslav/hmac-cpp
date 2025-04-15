@@ -40,7 +40,7 @@
  */
 
 #include <cstring>
-#include <fstream>
+//#include <fstream>
 #include "sha256.hpp"
 
 #define SHA2_SHFR(x, n)    (x >> n)
@@ -52,15 +52,15 @@
 #define SHA256_F2(x) (SHA2_ROTR(x,  6) ^ SHA2_ROTR(x, 11) ^ SHA2_ROTR(x, 25))
 #define SHA256_F3(x) (SHA2_ROTR(x,  7) ^ SHA2_ROTR(x, 18) ^ SHA2_SHFR(x,  3))
 #define SHA256_F4(x) (SHA2_ROTR(x, 17) ^ SHA2_ROTR(x, 19) ^ SHA2_SHFR(x, 10))
-#define SHA2_UNPACK32(x, str)                 \
-{                                             \
+#define SHA2_UNPACK32(x, str)                   \
+{                                               \
     *((str) + 3) = (uint8_t) ((x)      );       \
     *((str) + 2) = (uint8_t) ((x) >>  8);       \
     *((str) + 1) = (uint8_t) ((x) >> 16);       \
     *((str) + 0) = (uint8_t) ((x) >> 24);       \
 }
-#define SHA2_PACK32(str, x)                   \
-{                                             \
+#define SHA2_PACK32(str, x)                     \
+{                                               \
     *(x) =   ((uint32_t) *((str) + 3)      )    \
            | ((uint32_t) *((str) + 2) <<  8)    \
            | ((uint32_t) *((str) + 1) << 16)    \
@@ -164,7 +164,7 @@ namespace hmac_hash {
         size_t len_b;
         size_t i;
         block_nb = (1 + ((SHA224_256_BLOCK_SIZE - 9) 
-			< (m_len % SHA224_256_BLOCK_SIZE)));
+            < (m_len % SHA224_256_BLOCK_SIZE)));
         len_b = (m_tot_len + m_len) << 3;
         pm_len = block_nb << 6;
         memset(m_block + m_len, 0, pm_len - m_len);
@@ -176,14 +176,14 @@ namespace hmac_hash {
         }
     }
 
-	void sha256(const void* data, size_t length, uint8_t* digest) {
+    void sha256(const void* data, size_t length, uint8_t* digest) {
         hmac_hash::SHA256 ctx;
         ctx.init();
         ctx.update(reinterpret_cast<const uint8_t*>(data), length);
         ctx.finish(digest);
     }
-	
-	std::vector<uint8_t> sha256(const void* data, size_t length) {
+    
+    std::vector<uint8_t> sha256(const void* data, size_t length) {
         std::vector<uint8_t> digest(hmac_hash::SHA256::DIGEST_SIZE);
         hmac_hash::SHA256 ctx;
         ctx.init();

@@ -1,13 +1,16 @@
 # hmac-cpp [🇷🇺 README-RU](./README-RU.md)
 
-A lightweight `C++11` library for computing `HMAC` (hash-based message authentication code), supporting `SHA256` and `SHA512`.
+A lightweight `C++11` library for computing `HMAC` (hash-based message authentication codes), supporting `SHA1`, `SHA256`, `SHA512`, as well as one-time passwords compliant with `HOTP` (RFC 4226) and `TOTP` (RFC 6238).
 
 ## 🚀 Features
 
 - Compatible with **C++11**
-- Supports `HMAC` using `SHA256` and `SHA512`
+- Supports `HMAC` using `SHA256`, `SHA512`, `SHA1`
 - Outputs in binary or hex format
-- Supports **time-based HMAC tokens**
+- Support for **time-based tokens**:
+	- **HOTP (RFC 4226)** — counter-based one-time passwords
+	- **TOTP (RFC 6238)** — time-based one-time passwords
+	- **HMAC Time Tokens** — lightweight HMAC-based tokens with rotation interval
 - Includes **MQL5 support** — adapted SHA/HMAC versions for MetaTrader
 - Static build via CMake
 - Example program included
@@ -33,7 +36,8 @@ This will create the following structure:
 _install/
 ├── include/hmac_cpp/
 │   ├── hmac.hpp
-│   ├── hmac_timed_token.hpp
+│   ├── hmac_utils.hpp
+│   ├── sha1.hpp
 │   ├── sha256.hpp
 │   └── sha512.hpp
 └── lib/
@@ -44,7 +48,7 @@ Predefined `.bat` scripts for MinGW builds are also available: `build_*.bat`.
 
 ## 📦 MQL5 Compatibility
 
-The repository includes `sha256.mqh`, `sha512.mqh`, `hmac.mqh`, and `hmac_timed_token.mqh` files, fully compatible with `MetaTrader 5`.
+The repository includes `sha256.mqh`, `sha512.mqh`, `hmac.mqh`, and `hmac_utils.mqh` files, fully compatible with `MetaTrader 5`.
 
 You can use the same interface inside your MQL5 scripts and experts:
 
@@ -123,25 +127,65 @@ Parameters:
 
 Returns: Binary digest as `std::vector<uint8_t>`
 
-### 🕓 Time-Based Tokens
+### 🕓 HOTP and TOTP Tokens
 
-The library supports generation and validation of tokens that rotate every N seconds:
+The library supports generating one-time passwords based on RFC 4226 and RFC 6238.
+
+#### HOTP (HMAC-based One-Time Password)
 
 ```cpp
-#include <hmac_timed_token.hpp>
+#include <hmac_utils.hpp>
+
+std::string key = "12345678901234567890"; // raw key
+uint64_t counter = 0;
+int otp = get_hotp_code(key, counter); // defaults: 6 digits, SHA1
+std::cout << "HOTP: " << otp << std::endl;
+```
+
+#### TOTP (Time-based One-Time Password)
+
+```cpp
+#include <hmac_utils.hpp>
+
+std::string key = "12345678901234567890"; // raw key
+int otp = get_totp_code(key); // defaults: 30s period, 6 digits, SHA1
+std::cout << "TOTP: " << otp << std::endl;
+```
+
+You can also generate a code for a specific timestamp:
+
+```cpp
+uint64_t time_at = 1700000000;
+int otp = get_totp_code_at(key, time_at);
+```
+
+### 🕓 Time-Based HMAC Tokens (Custom HMAC Time Tokens)
+
+The library also includes a **lightweight implementation of time-based HMAC tokens**, which are not directly based on RFC 4226/6238 (HOTP/TOTP). These tokens:
+
+- Are based on `HMAC(timestamp)`
+- Are returned as `hex` strings
+- Require no server-side state (stateless)
+- Support binding to a *client fingerprint* (e.g. device ID)
+- Support `SHA1`, `SHA256`, and `SHA512`
+
+#### Example:
+
+```cpp
+#include <hmac_utils.hpp>
 
 std::string token = hmac::generate_time_token(secret_key, 60);
 bool is_valid = hmac::is_token_valid(token, secret_key, 60);
 ```
 
-You can also bind the token to a client *fingerprint*:
+You can also bind the token to a *client fingerprint*:
 
 ```cpp
 std::string token = hmac::generate_time_token(secret_key, fingerprint, 60);
 bool is_valid = hmac::is_token_valid(token, secret_key, fingerprint, 60);
 ```
 
-This is useful for lightweight stateless authentication.
+This is useful for stateless authentication, API protection, and one-time tokens.
 
 ## 📄 Example
 

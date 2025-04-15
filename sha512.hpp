@@ -47,7 +47,7 @@
 
 namespace hmac_hash {
 
-	/// \brief SHA512 hashing class
+    /// \brief SHA512 hashing class
     ///
     /// SHA-512 is the largest hash function in the SHA-2 family.
     /// It provides 256-bit security for digital signatures and hash-only applications.
@@ -79,25 +79,25 @@ namespace hmac_hash {
         uint8_t m_block[2 * SHA384_512_BLOCK_SIZE];
         uint64_t m_h[8];
     };
-	
-	/// \brief Computes SHA512 hash of a raw byte buffer
+    
+    /// \brief Computes SHA512 hash of a raw byte buffer
     /// \param data Pointer to input data
     /// \param length Length of the input data
     /// \param digest Output buffer of size SHA512::DIGEST_SIZE
     void sha512(const void* data, size_t length, uint8_t* digest);
 
-	/// \brief Computes SHA512 hash of a raw byte buffer
+    /// \brief Computes SHA512 hash of a raw byte buffer
     /// \param data Pointer to input data
     /// \param length Length of the input data
     /// \return Vector containing the SHA512 digest
     std::vector<uint8_t> sha512(const void* data, size_t length);
-	
-	/// \brief Computes SHA512 hash of a string
-	/// \param input Input string
-	/// \return Hash as a binary string
+    
+    /// \brief Computes SHA512 hash of a string
+    /// \param input Input string
+    /// \return Hash as a binary string
     std::string sha512(const std::string &input);
-	
-	/// \brief Computes SHA512 hash of a vector of bytes
+    
+    /// \brief Computes SHA512 hash of a vector of bytes
     /// \tparam T Type of the vector element (char or uint8_t)
     /// \param input Input vector
     /// \return Vector with SHA512 digest

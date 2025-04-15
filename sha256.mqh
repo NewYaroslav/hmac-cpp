@@ -32,12 +32,12 @@ namespace hmac_hash {
         void init();
 
         /// \brief Updates SHA256 with new message data
-		/// \param message Pointer to input data
-		/// \param length Length of input data
+        /// \param message Pointer to input data
+        /// \param length Length of input data
         void update(const uchar &message[], int length);
 
         /// \brief Finalizes SHA256 and produces the hash
-		/// \param digest Output buffer of size DIGEST_SIZE
+        /// \param digest Output buffer of size DIGEST_SIZE
         void finish(uchar &digest[]);
 
     protected:
@@ -182,8 +182,8 @@ namespace hmac_hash {
     }
     
     /// \brief Computes SHA256 hash of a string
-	/// \param str Input string
-	/// \return Hash as a binary string
+    /// \param str Input string
+    /// \return Hash as a binary string
     string sha256(const string &str) {
         uchar bytes[];
         StringToCharArray(str, bytes, 0, -1, CP_UTF8);

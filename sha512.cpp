@@ -202,7 +202,7 @@ namespace hmac_hash {
         size_t len_b;
         size_t i;
         block_nb = (1 + ((SHA384_512_BLOCK_SIZE - 17) 
-			< (m_len % SHA384_512_BLOCK_SIZE)));
+            < (m_len % SHA384_512_BLOCK_SIZE)));
         len_b = (m_tot_len + m_len) << 3;
         pm_len = block_nb << 7;
         memset(m_block + m_len, 0, pm_len - m_len);
@@ -213,15 +213,15 @@ namespace hmac_hash {
             SHA2_UNPACK64(m_h[i], &digest[i << 3]);
         }
     }
-	
-	void sha512(const void* data, size_t length, uint8_t* digest) {
+    
+    void sha512(const void* data, size_t length, uint8_t* digest) {
         hmac_hash::SHA512 ctx;
         ctx.init();
         ctx.update(reinterpret_cast<const uint8_t*>(data), length);
         ctx.finish(digest);
     }
-	
-	std::vector<uint8_t> sha512(const void* data, size_t length) {
+    
+    std::vector<uint8_t> sha512(const void* data, size_t length) {
         std::vector<uint8_t> digest(hmac_hash::SHA512::DIGEST_SIZE);
         hmac_hash::SHA512 ctx;
         ctx.init();
