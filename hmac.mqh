@@ -16,45 +16,45 @@ namespace hmac {
         HASH_SHA256 = 0, ///< Use SHA256
         HASH_SHA512 = 1, ///< Use SHA512
     };
-	
-	/// \brief Converts a byte array to hexadecimal string
-	/// \param bytes Input byte array
-	/// \param is_upper Flag for uppercase hex
-	/// \return Hex string
-	string to_hex(const uchar &bytes[], bool is_upper = false) {
-		static const uchar lut[] = {
+    
+    /// \brief Converts a byte array to hexadecimal string
+    /// \param bytes Input byte array
+    /// \param is_upper Flag for uppercase hex
+    /// \return Hex string
+    string to_hex(const uchar &bytes[], bool is_upper = false) {
+        static const uchar lut[] = {
            '0','1','2','3','4','5','6','7','8','9',
            'a','b','c','d','e','f',
            '0','1','2','3','4','5','6','7','8','9',
            'A','B','C','D','E','F'
         };
 
-		int len = ArraySize(bytes);
-		if (len <= 0) return "";
+        int len = ArraySize(bytes);
+        if (len <= 0) return "";
 
-		uchar output[];
-		ArrayResize(output, 2 * len);
+        uchar output[];
+        ArrayResize(output, 2 * len);
 
-		int symbol_offset = is_upper ? 16 : 0;
+        int symbol_offset = is_upper ? 16 : 0;
 
-		for (int i = 0; i < len; ++i) {
-			uchar ch = bytes[i];
-			int j = i * 2;
-			output[j]     = lut[symbol_offset + (ch >> 4)];
-			output[j + 1] = lut[symbol_offset + (ch & 0x0F)];
-		}
+        for (int i = 0; i < len; ++i) {
+            uchar ch = bytes[i];
+            int j = i * 2;
+            output[j]     = lut[symbol_offset + (ch >> 4)];
+            output[j + 1] = lut[symbol_offset + (ch & 0x0F)];
+        }
 
-		return CharArrayToString(output, 0, -1, CP_UTF8);
-	}
-	
-	/// \brief Converts a string to hexadecimal format
+        return CharArrayToString(output, 0, -1, CP_UTF8);
+    }
+    
+    /// \brief Converts a string to hexadecimal format
     /// \param str Input string
     /// \param is_upper Flag for uppercase hex
     /// \return Hexadecimal string
     string to_hex(const string& str, bool is_upper = false) {
         uchar bytes[];
-		StringToCharArray(str, bytes, 0, -1, CP_UTF8);
-		return to_hex(bytes, is_upper);
+        StringToCharArray(str, bytes, 0, -1, CP_UTF8);
+        return to_hex(bytes, is_upper);
     }
     
     /// \brief Computes hash of the input bytes
@@ -94,7 +94,7 @@ namespace hmac {
         StringToCharArray(str, bytes, 0, -1, CP_UTF8);
         int len = ArraySize(bytes);
         if (len > 0 && bytes[len - 1] == '\0') len -= 1;
-		ArrayResize(bytes, len);
+        ArrayResize(bytes, len);
         uchar digest[];
         calc_hash(digest, bytes, type);
         string hex;
@@ -109,9 +109,9 @@ namespace hmac {
     /// \param key_data Secret key
     /// \param msg_data Message
     /// \param type Hash function type
-	void calc_hmac(uchar &digest[], const uchar &key_data[], const uchar &msg_data[], TypeHash type) {
-		int block_size = 0;
-		int digest_size = 0;
+    void calc_hmac(uchar &digest[], const uchar &key_data[], const uchar &msg_data[], TypeHash type) {
+        int block_size = 0;
+        int digest_size = 0;
         switch(type) {
         case TypeHash::HASH_SHA256:
             block_size = SHA224_256_BLOCK_SIZE;
@@ -160,7 +160,7 @@ namespace hmac {
         
         // final HMAC
         calc_hash(digest, okeypad, type);
-	}
+    }
 
     /// \brief Computes HMAC and returns result in hexadecimal string
     /// \param key_str Secret key as string
@@ -170,15 +170,15 @@ namespace hmac {
     /// \return Hex string representing HMAC
     string get_hmac(const string& key_str, const string &msg_str, TypeHash type, bool is_upper = false) {
         uchar key_bytes[];
-		uchar msg_bytes[];
-		StringToCharArray(key_str, key_bytes, 0, -1, CP_UTF8);
-		StringToCharArray(msg_str, msg_bytes, 0, -1, CP_UTF8);
-		int len = ArraySize(key_bytes);
+        uchar msg_bytes[];
+        StringToCharArray(key_str, key_bytes, 0, -1, CP_UTF8);
+        StringToCharArray(msg_str, msg_bytes, 0, -1, CP_UTF8);
+        int len = ArraySize(key_bytes);
         if (len > 0 && key_bytes[len - 1] == '\0') ArrayResize(key_bytes, len - 1);
         len = ArraySize(msg_bytes);
         if (len > 0 && msg_bytes[len - 1] == '\0') ArrayResize(msg_bytes, len - 1);
-		uchar hmac_bytes[];
-		calc_hmac(hmac_bytes, key_bytes, msg_bytes, type);
+        uchar hmac_bytes[];
+        calc_hmac(hmac_bytes, key_bytes, msg_bytes, type);
         return to_hex(hmac_bytes, is_upper);
     }
 }

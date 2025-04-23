@@ -8,9 +8,9 @@ A lightweight `C++11` library for computing `HMAC` (hash-based message authentic
 - Supports `HMAC` using `SHA256`, `SHA512`, `SHA1`
 - Outputs in binary or hex format
 - Support for **time-based tokens**:
-	- **HOTP (RFC 4226)** — counter-based one-time passwords
-	- **TOTP (RFC 6238)** — time-based one-time passwords
-	- **HMAC Time Tokens** — lightweight HMAC-based tokens with rotation interval
+    - **HOTP (RFC 4226)** — counter-based one-time passwords
+    - **TOTP (RFC 6238)** — time-based one-time passwords
+    - **HMAC Time Tokens** — lightweight HMAC-based tokens with rotation interval
 - Includes **MQL5 support** — adapted SHA/HMAC versions for MetaTrader
 - Static build via CMake
 - Example program included

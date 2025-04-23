@@ -18,7 +18,7 @@ namespace hmac {
 
     std::string get_hash(const std::string &input, TypeHash type) {
         switch(type) {
-			case TypeHash::SHA1: {
+            case TypeHash::SHA1: {
                 uint8_t digest[hmac_hash::SHA1::DIGEST_SIZE];
                 std::fill(digest, digest + hmac_hash::SHA1::DIGEST_SIZE, '\0');
                 hmac_hash::SHA1 ctx = hmac_hash::SHA1();
@@ -52,7 +52,7 @@ namespace hmac {
 
     std::vector<uint8_t> get_hash(const void* data, size_t length, TypeHash type) {
         switch(type) {
-			case TypeHash::SHA1: {
+            case TypeHash::SHA1: {
                 std::vector<uint8_t> digest(hmac_hash::SHA1::DIGEST_SIZE);
                 hmac_hash::SHA1 ctx;
                 ctx.init();
@@ -80,12 +80,12 @@ namespace hmac {
         }
     }
 
-	std::vector<uint8_t> get_hmac(const void* key_ptr, size_t key_len, const void* msg_ptr, size_t msg_len, TypeHash type) {
+    std::vector<uint8_t> get_hmac(const void* key_ptr, size_t key_len, const void* msg_ptr, size_t msg_len, TypeHash type) {
         size_t block_size = 0;
         size_t digest_size = 0;
 
         switch (type) {
-			case TypeHash::SHA1:
+            case TypeHash::SHA1:
                 block_size = hmac_hash::SHA1::BLOCK_SIZE;
                 digest_size = hmac_hash::SHA1::DIGEST_SIZE;
                 break;
@@ -136,7 +136,7 @@ namespace hmac {
     std::string get_hmac(const std::string& key_input, const std::string &msg, TypeHash type, bool is_hex, bool is_upper) {
         size_t block_size = 0;
         switch(type) {
-		case TypeHash::SHA1:
+        case TypeHash::SHA1:
             block_size = hmac_hash::SHA1::BLOCK_SIZE;
             break;
         case TypeHash::SHA256:

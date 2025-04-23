@@ -6,14 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_EXAMPLE "Build the example program" ON)
 
-set(HMAC_HEADERS
-    hmac.hpp
-	hmac_utils.hpp
-	sha1.hpp
-    sha256.hpp
-    sha512.hpp
-)
-
 set(HMAC_SOURCES
     sha1.cpp
 	sha256.cpp
@@ -22,7 +14,7 @@ set(HMAC_SOURCES
 	hmac_utils.cpp
 )
 
-add_library(hmac STATIC ${HMAC_SOURCES} ${HMAC_HEADERS})
+add_library(hmac STATIC ${HMAC_SOURCES})
 target_include_directories(hmac PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(BUILD_EXAMPLE)
