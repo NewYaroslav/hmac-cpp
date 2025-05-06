@@ -1,6 +1,7 @@
 #ifndef _HMAC_HPP_INCLUDED
 #define _HMAC_HPP_INCLUDED
 
+#include <cstdint>
 #include "sha1.hpp"
 #include "sha256.hpp"
 #include "sha512.hpp"

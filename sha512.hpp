@@ -44,6 +44,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace hmac_hash {
 
