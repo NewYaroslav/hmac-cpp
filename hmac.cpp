@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <stdexcept>
 #include "hmac.hpp"
 
 namespace hmac {
@@ -82,6 +83,8 @@ namespace hmac {
     }
 
     std::vector<uint8_t> get_hmac(const void* key_ptr, size_t key_len, const void* msg_ptr, size_t msg_len, TypeHash type) {
+        if ((key_len > 0 && key_ptr == nullptr) || (msg_len > 0 && msg_ptr == nullptr))
+            throw std::invalid_argument("Null pointer with non-zero length");
         size_t block_size = 0;
         size_t digest_size = 0;
 

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <string>
+#include <stdexcept>
 #include "hmac.hpp"
 #include "hmac_utils.hpp"
 
@@ -41,6 +42,13 @@ TEST(HMACTest, SHA512Uppercase) {
     const std::string input = "grape";
     EXPECT_EQ(hmac::get_hmac(key, input, hmac::TypeHash::SHA512, true, true),
               "C54DDF9647A949D0DF925A1C1F8BA1C9D721A671C396FDE1062A71F9F7FFAE5DC10F6BE15BE63BB0363D051365E23F890368C54828497B9AEF2EB2FC65B633E6");
+}
+
+TEST(HMACTest, NullPointersThrow) {
+    const char* msg = "abc";
+    EXPECT_THROW(hmac::get_hmac(nullptr, 1, msg, 3, hmac::TypeHash::SHA256), std::invalid_argument);
+    const char* key = "key";
+    EXPECT_THROW(hmac::get_hmac(key, 3, nullptr, 1, hmac::TypeHash::SHA256), std::invalid_argument);
 }
 
 TEST(TOTPTest, AtTime) {
