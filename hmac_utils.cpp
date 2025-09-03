@@ -6,12 +6,18 @@
 namespace hmac {
 
     std::string generate_time_token(const std::string &key, int interval_sec, TypeHash hash_type) {
+        if (interval_sec <= 0) {
+            throw std::invalid_argument("interval_sec must be positive");
+        }
         auto now = std::time(nullptr);
         std::time_t rounded = (now / interval_sec) * interval_sec;
         return get_hmac(key, std::to_string(rounded), hash_type);
     }
 
     bool is_token_valid(const std::string &token, const std::string &key, int interval_sec, TypeHash hash_type) {
+        if (interval_sec <= 0) {
+            throw std::invalid_argument("interval_sec must be positive");
+        }
         auto now = std::time(nullptr);
         std::time_t rounded = (now / interval_sec) * interval_sec;
         if (token == get_hmac(key, std::to_string(rounded), hash_type)) return true;
@@ -21,6 +27,9 @@ namespace hmac {
     }
 
     std::string generate_time_token(const std::string &key, const std::string &fingerprint, int interval_sec, TypeHash hash_type) {
+        if (interval_sec <= 0) {
+            throw std::invalid_argument("interval_sec must be positive");
+        }
         auto now = std::time(nullptr);
         std::time_t rounded = (now / interval_sec) * interval_sec;
         std::string payload = std::to_string(rounded) + "|" + fingerprint;
@@ -28,6 +37,9 @@ namespace hmac {
     }
 
     bool is_token_valid(const std::string &token, const std::string &key, const std::string &fingerprint, int interval_sec, TypeHash hash_type) {
+        if (interval_sec <= 0) {
+            throw std::invalid_argument("interval_sec must be positive");
+        }
         auto now = std::time(nullptr);
         std::time_t rounded = (now / interval_sec) * interval_sec;
         std::string prefix = "|" + fingerprint;
