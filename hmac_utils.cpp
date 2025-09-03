@@ -3,6 +3,15 @@
 #include <stdexcept>
 
 namespace hmac {
+ 
+    bool constant_time_equals(const std::string &a, const std::string &b) {
+        if (a.size() != b.size()) return false;
+        unsigned char diff = 0;
+        for (size_t i = 0; i < a.size(); ++i) {
+            diff |= static_cast<unsigned char>(a[i]) ^ static_cast<unsigned char>(b[i]);
+        }
+        return diff == 0;
+    }
 
     std::string generate_time_token(const std::string &key, int interval_sec, TypeHash hash_type) {
         if (interval_sec <= 0) {
@@ -25,9 +34,9 @@ namespace hmac {
             throw std::runtime_error("std::time failed");
         }
         std::time_t rounded = (now / interval_sec) * interval_sec;
-        if (token == get_hmac(key, std::to_string(rounded), hash_type)) return true;
-        if (token == get_hmac(key, std::to_string(rounded - interval_sec), hash_type)) return true;
-        if (token == get_hmac(key, std::to_string(rounded + interval_sec), hash_type)) return true;
+        if (constant_time_equals(token, get_hmac(key, std::to_string(rounded), hash_type))) return true;
+        if (constant_time_equals(token, get_hmac(key, std::to_string(rounded - interval_sec), hash_type))) return true;
+        if (constant_time_equals(token, get_hmac(key, std::to_string(rounded + interval_sec), hash_type))) return true;
         return false;
     }
 
@@ -55,11 +64,11 @@ namespace hmac {
         std::time_t rounded = (now / interval_sec) * interval_sec;
         std::string prefix = "|" + fingerprint;
         std::string payload = std::to_string(rounded) + prefix;
-        if (token == get_hmac(key, payload, hash_type)) return true;
+        if (constant_time_equals(token, get_hmac(key, payload, hash_type))) return true;
         payload = std::to_string(rounded - interval_sec) + prefix;
-        if (token == get_hmac(key, payload, hash_type)) return true;
+        if (constant_time_equals(token, get_hmac(key, payload, hash_type))) return true;
         payload = std::to_string(rounded + interval_sec) + prefix;
-        if (token == get_hmac(key, payload, hash_type)) return true;
+        if (constant_time_equals(token, get_hmac(key, payload, hash_type))) return true;
         return false;
     }
 
