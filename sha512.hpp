@@ -36,7 +36,7 @@
  */
 
 /* Based on: http://www.zedwood.com/article/cpp-sha512-function
- * Modified by Elektro Yar, 2020-06-18
+ * Modified by NewYaroslav, 2020-06-18
  */
 
 #ifndef _HMAC_SHA512_HPP_INCLUDED
