@@ -20,6 +20,7 @@
  */
 
 #include <cstdio>
+#include <algorithm>
 #include "sha1.hpp"
 
 /* Help macros */

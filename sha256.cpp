@@ -36,9 +36,10 @@
  */
 
 /* Оригинал кода: http://www.zedwood.com/article/cpp-sha256-function
- * Исправления: 18.06.2020 Elektro Yar
+ * Исправления: 18.06.2020 NewYaroslav
  */
 
+#include <algorithm>
 #include <cstring>
 #include <cstdio>
 //#include <fstream>

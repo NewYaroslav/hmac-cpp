@@ -13,8 +13,16 @@ set(HMAC_SOURCES
     sha1.cpp
 	sha256.cpp
     sha512.cpp
-	hmac.cpp
-	hmac_utils.cpp
+        hmac.cpp
+        hmac_utils.cpp
+)
+
+set(HMAC_HEADERS
+    hmac.hpp
+    hmac_utils.hpp
+    sha1.hpp
+    sha256.hpp
+    sha512.hpp
 )
 
 add_library(hmac STATIC ${HMAC_SOURCES})
