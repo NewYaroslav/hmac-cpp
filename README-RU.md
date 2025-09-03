@@ -228,6 +228,12 @@ int main() {
 * Исходный код [SHA512](http://www.zedwood.com/article/cpp-sha512-function)
 * Описание алгоритма [HMAC](https://ru.wikipedia.org/wiki/HMAC)
 
+## 🔗 Другие проекты
+
+- [ADVobfuscator](https://github.com/andrivet/ADVobfuscator)
+- [obfy](https://github.com/NewYaroslav/obfy)
+- [aescpp](https://github.com/NewYaroslav/aescpp)
+
 ## 📝 Лицензия
 
 Проект распространяется под лицензией **MIT**.  
