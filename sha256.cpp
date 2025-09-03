@@ -136,7 +136,7 @@ namespace hmac_hash {
         m_tot_len = 0;
     }
 
-    void SHA256::update(const unsigned char *message, size_t length) {
+    void SHA256::update(const uint8_t *message, size_t length) {
         size_t block_nb;
         size_t new_len, rem_len, tmp_len;
         const uint8_t *shifted_message;
@@ -198,7 +198,7 @@ namespace hmac_hash {
 
         hmac_hash::SHA256 ctx;
         ctx.init();
-        ctx.update((uint8_t*)input.c_str(), input.length());
+        ctx.update(reinterpret_cast<const uint8_t*>(input.data()), input.length());
         ctx.finish(digest);
 
         char buf[2 * hmac_hash::SHA256::DIGEST_SIZE + 1];

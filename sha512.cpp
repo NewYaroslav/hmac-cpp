@@ -234,7 +234,7 @@ namespace hmac_hash {
         std::fill(digest, digest + hmac_hash::SHA512::DIGEST_SIZE, '\0');
         hmac_hash::SHA512 ctx;
         ctx.init();
-        ctx.update((uint8_t*)input.c_str(), input.length());
+        ctx.update(reinterpret_cast<const uint8_t*>(input.data()), input.length());
         ctx.finish(digest);
 
         char buf[2 * hmac_hash::SHA512::DIGEST_SIZE + 1];

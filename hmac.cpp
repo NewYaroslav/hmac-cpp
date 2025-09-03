@@ -23,7 +23,7 @@ namespace hmac {
                 std::fill(digest, digest + hmac_hash::SHA1::DIGEST_SIZE, '\0');
                 hmac_hash::SHA1 ctx = hmac_hash::SHA1();
                 ctx.init();
-                ctx.update((uint8_t*)input.c_str(), input.size());
+                ctx.update(reinterpret_cast<const uint8_t*>(input.data()), input.size());
                 ctx.finish(digest);
                 return std::string((const char*)digest, hmac_hash::SHA1::DIGEST_SIZE);
             }
@@ -32,7 +32,7 @@ namespace hmac {
                 std::fill(digest, digest + hmac_hash::SHA256::DIGEST_SIZE, '\0');
                 hmac_hash::SHA256 ctx = hmac_hash::SHA256();
                 ctx.init();
-                ctx.update((uint8_t*)input.c_str(), input.size());
+                ctx.update(reinterpret_cast<const uint8_t*>(input.data()), input.size());
                 ctx.finish(digest);
                 return std::string((const char*)digest, hmac_hash::SHA256::DIGEST_SIZE);
             }
@@ -41,7 +41,7 @@ namespace hmac {
                 std::fill(digest, digest + hmac_hash::SHA512::DIGEST_SIZE, '\0');
                 hmac_hash::SHA512 ctx = hmac_hash::SHA512();
                 ctx.init();
-                ctx.update((uint8_t*)input.c_str(), input.size());
+                ctx.update(reinterpret_cast<const uint8_t*>(input.data()), input.size());
                 ctx.finish(digest);
                 return std::string((const char*)digest, hmac_hash::SHA512::DIGEST_SIZE);
             }
