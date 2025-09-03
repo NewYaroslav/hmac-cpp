@@ -228,6 +228,11 @@ int main() {
 * Original [SHA512 implementation](http://www.zedwood.com/article/cpp-sha512-function)
 * Algorithm description on [Wikipedia](https://ru.wikipedia.org/wiki/HMAC)
 
+## 🔗 Related Projects
+
+- [ADVobfuscator](https://github.com/andrivet/ADVobfuscator)
+- [obfy](https://github.com/NewYaroslav/obfy)
+- [aescpp](https://github.com/NewYaroslav/aescpp)
 
 ## 📝 License
 
