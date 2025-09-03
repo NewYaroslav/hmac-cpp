@@ -81,12 +81,13 @@ namespace hmac {
     /// \param digits Number of digits in the resulting OTP code (1 to 9, default: 6)
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512; default: SHA1)
     /// \return TOTP code as an integer
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     int get_totp_code_at(
-            const void* key_ptr, 
-            size_t key_len, 
-            uint64_t  timestamp, 
-            int period = 30, 
-            int digits = 6, 
+            const void* key_ptr,
+            size_t key_len,
+            uint64_t  timestamp,
+            int period = 30,
+            int digits = 6,
             TypeHash hash_type = TypeHash::SHA1);
         
     /// \brief Computes TOTP code for a specific timestamp from a vector-based key
@@ -97,11 +98,12 @@ namespace hmac {
     /// \param digits Number of digits in the resulting OTP code (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return TOTP code as an integer
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     template<typename T>
     inline int get_totp_code_at(
-            const std::vector<T>& key, 
+            const std::vector<T>& key,
             uint64_t timestamp,
-            int period = 30, 
+            int period = 30,
             int digits = 6, 
             TypeHash hash_type = TypeHash::SHA1) {
         static_assert(std::is_same<T, char>::value || std::is_same<T, uint8_t>::value,
@@ -116,11 +118,12 @@ namespace hmac {
     /// \param digits Number of digits in the resulting OTP code (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return TOTP code as an integer
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     inline int get_totp_code_at(
-            const std::string& key, 
+            const std::string& key,
             uint64_t timestamp,
-            int period = 30, 
-            int digits = 6, 
+            int period = 30,
+            int digits = 6,
             TypeHash hash_type = TypeHash::SHA1) {
         return get_totp_code_at(key.data(), key.size(), timestamp, period, digits, hash_type);
     }
@@ -132,11 +135,12 @@ namespace hmac {
     /// \param digits Number of digits in the resulting OTP code (default: 6).
     /// \param hash_type Hash function to use (default: SHA1).
     /// \return TOTP code as an integer.
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9].
     int get_totp_code(
-            const void* key_ptr, 
+            const void* key_ptr,
             size_t key_len,
-            int period = 30, 
-            int digits = 6, 
+            int period = 30,
+            int digits = 6,
             TypeHash hash_type = TypeHash::SHA1);
 
     /// \brief Computes current TOTP code from a vector-based key using system time (UTC)
@@ -146,6 +150,7 @@ namespace hmac {
     /// \param digits Number of digits in the resulting OTP code (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return TOTP code as an integer
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     template<typename T>
     inline int get_totp_code(const std::vector<T>& key, int period = 30, int digits = 6, TypeHash hash_type = TypeHash::SHA1) {
         return get_totp_code(key.data(), key.size(), period, digits, hash_type);
@@ -157,6 +162,7 @@ namespace hmac {
     /// \param digits Number of digits in the resulting OTP code (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return TOTP code as an integer
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     inline int get_totp_code(const std::string& key, int period = 30, int digits = 6, TypeHash hash_type = TypeHash::SHA1) {
         return get_totp_code(key.data(), key.size(), period, digits, hash_type);
     }
@@ -170,6 +176,7 @@ namespace hmac {
     /// \param digits Expected number of digits in the OTP (default: 6)
     /// \param hash_type Hash algorithm to use (SHA1, SHA256, SHA512). Default is SHA1
     /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     bool is_totp_token_valid(
             int token,
             const void* key_ptr,
@@ -188,6 +195,7 @@ namespace hmac {
     /// \param digits Number of digits in the OTP (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     template<typename T>
     inline bool is_totp_token_valid(
             int token,
@@ -209,6 +217,7 @@ namespace hmac {
     /// \param digits Number of digits in the OTP (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     inline bool is_totp_token_valid(
             int token,
             const std::string& key,
@@ -227,6 +236,7 @@ namespace hmac {
     /// \param digits Expected number of digits in the OTP (default: 6)
     /// \param hash_type Hash algorithm to use (default: SHA1)
     /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     bool is_totp_token_valid(
             int token,
             const void* key_ptr,
@@ -243,6 +253,7 @@ namespace hmac {
     /// \param digits Number of digits in the OTP (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     template<typename T>
     inline bool is_totp_token_valid(
             int token,
@@ -262,6 +273,7 @@ namespace hmac {
     /// \param digits Number of digits in the OTP (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     inline bool is_totp_token_valid(
             int token,
             const std::string& key,
