@@ -53,7 +53,7 @@ namespace hmac {
     }
 
     int get_hotp_code(const void* key_ptr, size_t key_len, uint64_t counter, int digits, TypeHash hash_type) {
-        if (digits < 1 || digits > 10) throw std::invalid_argument("HOTP: digits must be in range [1, 9]");
+        if (digits < 1 || digits > 9) throw std::invalid_argument("HOTP: digits must be in range [1, 9]");
 
         // Step 1: Pack counter as 8-byte big-endian
         uint8_t counter_bytes[8];
@@ -89,7 +89,7 @@ namespace hmac {
             int period, 
             int digits, 
             TypeHash hash_type) {
-        if (period <= 0 || digits <= 0 || digits > 10) return 0;
+        if (period <= 0 || digits <= 0 || digits > 9) return 0;
         uint64_t counter = timestamp / period;
         return get_hotp_code(key_ptr, key_len, counter, digits, hash_type);
     }
