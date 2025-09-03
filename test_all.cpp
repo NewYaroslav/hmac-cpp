@@ -23,6 +23,15 @@ TEST(UtilsTest, ToHex) {
     EXPECT_EQ(hmac::to_hex("012345"), "303132333435");
 }
 
+TEST(UtilsTest, ConstantTimeEqualsMatch) {
+    EXPECT_TRUE(hmac::constant_time_equals("alpha", "alpha"));
+}
+
+TEST(UtilsTest, ConstantTimeEqualsMismatch) {
+    EXPECT_FALSE(hmac::constant_time_equals("alpha", "beta"));
+    EXPECT_FALSE(hmac::constant_time_equals("alpha", "alphabet"));
+}
+
 TEST(HMACTest, SHA256) {
     const std::string key = "12345";
     const std::string input = "grape";
