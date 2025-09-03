@@ -47,7 +47,7 @@ namespace hmac_hash {
         m_buffer.clear();
     }
     
-    void SHA1::update(const unsigned char *message, size_t length) {
+    void SHA1::update(const uint8_t *message, size_t length) {
         size_t offset = 0;
 
         // Fill buffer if it has existing bytes
@@ -240,7 +240,7 @@ namespace hmac_hash {
 
         hmac_hash::SHA1 ctx;
         ctx.init();
-        ctx.update((uint8_t*)input.c_str(), input.length());
+        ctx.update(reinterpret_cast<const uint8_t*>(input.data()), input.length());
         ctx.finish(digest);
 
         char buf[2 * hmac_hash::SHA1::DIGEST_SIZE + 1];
