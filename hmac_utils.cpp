@@ -85,10 +85,16 @@ namespace hmac {
             const void* key_ptr, 
             size_t key_len, 
             uint64_t timestamp,
-            int period, 
-            int digits, 
+            int period,
+            int digits,
             TypeHash hash_type) {
-        if (period <= 0 || digits <= 0 || digits > 9) return 0;
+        // Validate period and digit parameters
+        if (period <= 0) {
+            throw std::invalid_argument("TOTP: period must be positive");
+        }
+        if (digits < 1 || digits > 9) {
+            throw std::invalid_argument("TOTP: digits must be in range [1, 9]");
+        }
         uint64_t counter = timestamp / period;
         return get_hotp_code(key_ptr, key_len, counter, digits, hash_type);
     }
@@ -99,6 +105,13 @@ namespace hmac {
             int period,
             int digits,
             TypeHash hash_type) {
+        // Validate period and digit parameters
+        if (period <= 0) {
+            throw std::invalid_argument("TOTP: period must be positive");
+        }
+        if (digits < 1 || digits > 9) {
+            throw std::invalid_argument("TOTP: digits must be in range [1, 9]");
+        }
         uint64_t timestamp = static_cast<uint64_t>(std::time(nullptr));
         return get_totp_code_at(key_ptr, key_len, timestamp, period, digits, hash_type);
     }
@@ -111,6 +124,13 @@ namespace hmac {
             int period,
             int digits,
             TypeHash hash_type) {
+        // Validate period and digit parameters
+        if (period <= 0) {
+            throw std::invalid_argument("TOTP: period must be positive");
+        }
+        if (digits < 1 || digits > 9) {
+            throw std::invalid_argument("TOTP: digits must be in range [1, 9]");
+        }
         uint64_t counter = timestamp / period;
         if (token == get_hotp_code(key_ptr, key_len, counter, digits, hash_type)) return true;
         if (token == get_hotp_code(key_ptr, key_len, counter + 1, digits, hash_type)) return true;
@@ -127,6 +147,13 @@ namespace hmac {
             int period,
             int digits,
             TypeHash hash_type) {
+        // Validate period and digit parameters
+        if (period <= 0) {
+            throw std::invalid_argument("TOTP: period must be positive");
+        }
+        if (digits < 1 || digits > 9) {
+            throw std::invalid_argument("TOTP: digits must be in range [1, 9]");
+        }
         uint64_t timestamp = static_cast<uint64_t>(std::time(nullptr));
         uint64_t counter = timestamp / period;
         if (token == get_hotp_code(key_ptr, key_len, counter, digits, hash_type)) return true;
