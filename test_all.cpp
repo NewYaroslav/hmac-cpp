@@ -3,13 +3,16 @@
 #include <stdexcept>
 #include <vector>
 #include <limits>
+#include <cerrno>
 
 #include "hmac.hpp"
 #include "hmac_utils.hpp"
 
 static std::time_t mock_time_value = 0;
+static int mock_errno_value = 0;
 extern "C" std::time_t time(std::time_t* t) {
     if (t) *t = mock_time_value;
+    errno = mock_errno_value;
     return mock_time_value;
 }
 
@@ -173,6 +176,44 @@ TEST(TokenBoundaryFingerprintTest, MinTime) {
     std::string token_next = hmac::generate_time_token(key, fingerprint, interval);
     mock_time_value = std::numeric_limits<std::time_t>::min();
     EXPECT_TRUE(hmac::is_token_valid(token_next, key, fingerprint, interval));
+}
+
+TEST(TimeErrorTest, MinusOneNoErrno) {
+    const std::string key = "12345";
+    mock_time_value = static_cast<std::time_t>(-1);
+    mock_errno_value = 0;
+    std::string token;
+    EXPECT_NO_THROW(token = hmac::generate_time_token(key));
+    EXPECT_EQ(token, hmac::get_hmac(key, "0", hmac::TypeHash::SHA256));
+    mock_time_value = 0;
+    mock_errno_value = 0;
+}
+
+TEST(TimeErrorTest, MinusOneWithErrno) {
+    const std::string key = "12345";
+    mock_time_value = static_cast<std::time_t>(-1);
+    mock_errno_value = EINVAL;
+    EXPECT_THROW(hmac::generate_time_token(key), std::runtime_error);
+    mock_errno_value = 0;
+    mock_time_value = 0;
+}
+
+TEST(TotpTimeErrorTest, MinusOneNoErrno) {
+    const std::string key = "12345";
+    mock_time_value = static_cast<std::time_t>(-1);
+    mock_errno_value = 0;
+    EXPECT_NO_THROW(hmac::get_totp_code(key));
+    mock_time_value = 0;
+    mock_errno_value = 0;
+}
+
+TEST(TotpTimeErrorTest, MinusOneWithErrno) {
+    const std::string key = "12345";
+    mock_time_value = static_cast<std::time_t>(-1);
+    mock_errno_value = EINVAL;
+    EXPECT_THROW(hmac::get_totp_code(key), std::runtime_error);
+    mock_errno_value = 0;
+    mock_time_value = 0;
 }
 
 int main(int argc, char **argv) {
