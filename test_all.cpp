@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <stdexcept>
+#include <vector>
 #include <limits>
+
 #include "hmac.hpp"
 #include "hmac_utils.hpp"
 
@@ -24,6 +26,23 @@ TEST(HashTest, SHA256) {
 TEST(HashTest, SHA512) {
     EXPECT_EQ(hmac_hash::sha512("grape"),
               "9375d1abdb644a01955bccad12e2f5c2bd8a3e226187e548d99c559a99461453b980123746753d07c169c22a5d9cc75cb158f0e8d8c0e713559775b5e1391fc4");
+}
+
+TEST(HashTest, SHA512LargeInput) {
+    hmac_hash::SHA512 ctx;
+    ctx.init();
+    std::vector<uint8_t> chunk(1024 * 1024, 'a');
+    for (size_t i = 0; i < 4096; ++i) {
+        ctx.update(chunk.data(), chunk.size());
+    }
+    uint8_t tail = 'b';
+    ctx.update(&tail, 1);
+
+    uint8_t digest[hmac_hash::SHA512::DIGEST_SIZE];
+    ctx.finish(digest);
+    std::string result(reinterpret_cast<char*>(digest), hmac_hash::SHA512::DIGEST_SIZE);
+    EXPECT_EQ(hmac::to_hex(result),
+              "596d71e02b4eca81f668215d3e9b9e5a143a9c3d8d1981608e0811b20e290961ec2a7e7ecd0e275366cf10aa5f7ab1e052b868c5fa57b6d2bd6e75477b2ecea7");
 }
 
 TEST(UtilsTest, ToHex) {

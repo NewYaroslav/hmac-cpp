@@ -179,9 +179,9 @@ namespace hmac_hash {
         size_t block_nb;
         size_t new_len, rem_len, tmp_len;
         const uint8_t *shifted_message;
-        tmp_len = SHA384_512_BLOCK_SIZE - m_len;
+        tmp_len = SHA384_512_BLOCK_SIZE - static_cast<size_t>(m_len);
         rem_len = length < tmp_len ? length : tmp_len;
-        memcpy(&m_block[m_len], message, rem_len);
+        memcpy(&m_block[static_cast<size_t>(m_len)], message, rem_len);
         if((m_len + length) < SHA384_512_BLOCK_SIZE) {
             m_len += length;
             return;
@@ -194,7 +194,7 @@ namespace hmac_hash {
         rem_len = new_len % SHA384_512_BLOCK_SIZE;
         memcpy(m_block, &shifted_message[block_nb << 7], rem_len);
         m_len = rem_len;
-        m_tot_len += (block_nb + 1) << 7;
+        m_tot_len += static_cast<uint64_t>(block_nb + 1) << 7;
     }
 
     void SHA512::finish(uint8_t *digest) {
@@ -203,11 +203,11 @@ namespace hmac_hash {
         uint64_t len_b; // message length in bits
         size_t i;
         block_nb = (1 + ((SHA384_512_BLOCK_SIZE - 9)
-            < (m_len % SHA384_512_BLOCK_SIZE)));
+            < (static_cast<size_t>(m_len) % SHA384_512_BLOCK_SIZE)));
         len_b = (m_tot_len + m_len) << 3;
         pm_len = block_nb << 7;
-        memset(m_block + m_len, 0, pm_len - m_len);
-        m_block[m_len] = 0x80;
+        memset(m_block + static_cast<size_t>(m_len), 0, pm_len - static_cast<size_t>(m_len));
+        m_block[static_cast<size_t>(m_len)] = 0x80;
         SHA2_UNPACK64(len_b, m_block + pm_len - 8);
         transform(m_block, block_nb);
         for(i = 0 ; i < 8; ++i) {
