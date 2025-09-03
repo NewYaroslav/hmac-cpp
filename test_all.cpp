@@ -1,0 +1,64 @@
+#include <gtest/gtest.h>
+#include <string>
+#include "hmac.hpp"
+#include "hmac_utils.hpp"
+
+TEST(HashTest, SHA1) {
+    EXPECT_EQ(hmac_hash::sha1("grape"),
+              "bc8a2f8cdedb005b5c787692853709b060db75ff");
+}
+
+TEST(HashTest, SHA256) {
+    EXPECT_EQ(hmac_hash::sha256("grape"),
+              "0f78fcc486f5315418fbf095e71c0675ee07d318e5ac4d150050cd8e57966496");
+}
+
+TEST(HashTest, SHA512) {
+    EXPECT_EQ(hmac_hash::sha512("grape"),
+              "9375d1abdb644a01955bccad12e2f5c2bd8a3e226187e548d99c559a99461453b980123746753d07c169c22a5d9cc75cb158f0e8d8c0e713559775b5e1391fc4");
+}
+
+TEST(UtilsTest, ToHex) {
+    EXPECT_EQ(hmac::to_hex("012345"), "303132333435");
+}
+
+TEST(HMACTest, SHA256) {
+    const std::string key = "12345";
+    const std::string input = "grape";
+    EXPECT_EQ(hmac::get_hmac(key, input, hmac::TypeHash::SHA256, true),
+              "7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca");
+}
+
+TEST(HMACTest, SHA512) {
+    const std::string key = "12345";
+    const std::string input = "grape";
+    EXPECT_EQ(hmac::get_hmac(key, input, hmac::TypeHash::SHA512, true),
+              "c54ddf9647a949d0df925a1c1f8ba1c9d721a671c396fde1062a71f9f7ffae5dc10f6be15be63bb0363d051365e23f890368c54828497b9aef2eb2fc65b633e6");
+}
+
+TEST(HMACTest, SHA512Uppercase) {
+    const std::string key = "12345";
+    const std::string input = "grape";
+    EXPECT_EQ(hmac::get_hmac(key, input, hmac::TypeHash::SHA512, true, true),
+              "C54DDF9647A949D0DF925A1C1F8BA1C9D721A671C396FDE1062A71F9F7FFAE5DC10F6BE15BE63BB0363D051365E23F890368C54828497B9AEF2EB2FC65B633E6");
+}
+
+TEST(TOTPTest, AtTime) {
+    const std::string totp_key = "12345678901234567890";
+    uint64_t test_time = 1234567890;
+    int code = hmac::get_totp_code_at(totp_key, test_time, 30, 8, hmac::TypeHash::SHA1);
+    EXPECT_EQ(code, 89005924);
+}
+
+TEST(TokenTest, InvalidInterval) {
+    const std::string key = "12345";
+    std::string token = hmac::generate_time_token(key, 60);
+    EXPECT_THROW(hmac::generate_time_token(key, 0), std::invalid_argument);
+    EXPECT_THROW(hmac::is_token_valid(token, key, 0), std::invalid_argument);
+}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
+

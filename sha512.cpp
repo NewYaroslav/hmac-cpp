@@ -198,15 +198,15 @@ namespace hmac_hash {
     void SHA512::finish(uint8_t *digest) {
         size_t block_nb;
         size_t pm_len;
-        size_t len_b;
+        uint64_t len_b; // message length in bits
         size_t i;
-        block_nb = (1 + ((SHA384_512_BLOCK_SIZE - 17) 
+        block_nb = (1 + ((SHA384_512_BLOCK_SIZE - 9)
             < (m_len % SHA384_512_BLOCK_SIZE)));
         len_b = (m_tot_len + m_len) << 3;
         pm_len = block_nb << 7;
         memset(m_block + m_len, 0, pm_len - m_len);
         m_block[m_len] = 0x80;
-        SHA2_UNPACK32(len_b, m_block + pm_len - 4);
+        SHA2_UNPACK64(len_b, m_block + pm_len - 8);
         transform(m_block, block_nb);
         for(i = 0 ; i < 8; ++i) {
             SHA2_UNPACK64(m_h[i], &digest[i << 3]);
