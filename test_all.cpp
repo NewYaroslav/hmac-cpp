@@ -58,6 +58,13 @@ TEST(HMACTest, NullPointersThrow) {
     EXPECT_THROW(hmac::get_hmac(key, 3, nullptr, 1, hmac::TypeHash::SHA256), std::invalid_argument);
 }
 
+TEST(HMACTest, InvalidTypeThrows) {
+    const char* key = "key";
+    const char* msg = "abc";
+    auto invalid = static_cast<hmac::TypeHash>(999);
+    EXPECT_THROW(hmac::get_hmac(key, 3, msg, 3, invalid), std::invalid_argument);
+}
+
 TEST(TOTPTest, AtTime) {
     const std::string totp_key = "12345678901234567890";
     uint64_t test_time = 1234567890;

@@ -102,7 +102,7 @@ namespace hmac {
                 digest_size = hmac_hash::SHA512::DIGEST_SIZE;
                 break;
             default:
-                return {};
+                throw std::invalid_argument("Unsupported hash type");
         }
 
         // Step 1: Normalize key
