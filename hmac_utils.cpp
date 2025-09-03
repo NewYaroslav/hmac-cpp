@@ -1,5 +1,6 @@
 #include "hmac_utils.hpp"
 #include <ctime>
+#include <cerrno>
 #include <stdexcept>
 #include <limits>
 
@@ -20,8 +21,9 @@ namespace hmac {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
+        errno = 0;
         std::time_t now = std::time(nullptr);
-        if (now == static_cast<std::time_t>(-1)) {
+        if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
         std::time_t rounded = (now / interval_sec) * interval_sec;
@@ -32,8 +34,9 @@ namespace hmac {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
+        errno = 0;
         std::time_t now = std::time(nullptr);
-        if (now == static_cast<std::time_t>(-1)) {
+        if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
         std::time_t rounded = (now / interval_sec) * interval_sec;
@@ -51,8 +54,9 @@ namespace hmac {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
+        errno = 0;
         std::time_t now = std::time(nullptr);
-        if (now == static_cast<std::time_t>(-1)) {
+        if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
         std::time_t rounded = (now / interval_sec) * interval_sec;
@@ -64,8 +68,9 @@ namespace hmac {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
+        errno = 0;
         std::time_t now = std::time(nullptr);
-        if (now == static_cast<std::time_t>(-1)) {
+        if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
         std::time_t rounded = (now / interval_sec) * interval_sec;
@@ -144,8 +149,9 @@ namespace hmac {
         if (digits < 1 || digits > 9) {
             throw std::invalid_argument("TOTP: digits must be in range [1, 9]");
         }
+        errno = 0;
         std::time_t now = std::time(nullptr);
-        if (now == static_cast<std::time_t>(-1)) {
+        if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
         uint64_t timestamp = static_cast<uint64_t>(now);
@@ -192,8 +198,9 @@ namespace hmac {
         if (digits < 1 || digits > 9) {
             throw std::invalid_argument("TOTP: digits must be in range [1, 9]");
         }
+        errno = 0;
         std::time_t now = std::time(nullptr);
-        if (now == static_cast<std::time_t>(-1)) {
+        if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
         uint64_t timestamp = static_cast<uint64_t>(now);
