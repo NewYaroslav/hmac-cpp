@@ -40,7 +40,6 @@
  */
 
 #include <cstring>
-#include <fstream>
 #include "sha512.hpp"
 
 #define SHA2_SHFR(x, n)    (x >> n)
