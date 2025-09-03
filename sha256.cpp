@@ -155,21 +155,22 @@ namespace hmac_hash {
         rem_len = new_len % SHA224_256_BLOCK_SIZE;
         memcpy(m_block, &shifted_message[block_nb << 6], rem_len);
         m_len = rem_len;
-        m_tot_len += (block_nb + 1) << 6;
+        m_tot_len += static_cast<uint64_t>(block_nb + 1) << 6;
     }
 
     void SHA256::finish(uint8_t *digest) {
         size_t block_nb;
         size_t pm_len;
-        size_t len_b;
+        uint64_t len_b;
         size_t i;
-        block_nb = (1 + ((SHA224_256_BLOCK_SIZE - 9) 
+        block_nb = (1 + ((SHA224_256_BLOCK_SIZE - 9)
             < (m_len % SHA224_256_BLOCK_SIZE)));
         len_b = (m_tot_len + m_len) << 3;
         pm_len = block_nb << 6;
         memset(m_block + m_len, 0, pm_len - m_len);
         m_block[m_len] = 0x80;
-        SHA2_UNPACK32(len_b, m_block + pm_len - 4);
+        SHA2_UNPACK32(static_cast<uint32_t>(len_b >> 32), m_block + pm_len - 8);
+        SHA2_UNPACK32(static_cast<uint32_t>(len_b & 0xFFFFFFFF), m_block + pm_len - 4);
         transform(m_block, block_nb);
         for(i = 0 ; i < 8; ++i) {
             SHA2_UNPACK32(m_h[i], &digest[i << 2]);
