@@ -175,7 +175,9 @@ namespace hmac {
     /// \param period Time step in seconds (default: 30)
     /// \param digits Expected number of digits in the OTP (default: 6)
     /// \param hash_type Hash algorithm to use (SHA1, SHA256, SHA512). Default is SHA1
-    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise.
+    ///         The +1 step check is skipped when the computed counter equals
+    ///         std::numeric_limits<uint64_t>::max().
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     bool is_totp_token_valid(
             int token,
@@ -194,7 +196,9 @@ namespace hmac {
     /// \param period Time step in seconds (default: 30)
     /// \param digits Number of digits in the OTP (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
-    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise.
+    ///         The +1 step check is skipped when the computed counter equals
+    ///         std::numeric_limits<uint64_t>::max().
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     template<typename T>
     inline bool is_totp_token_valid(
@@ -216,7 +220,9 @@ namespace hmac {
     /// \param period Time step in seconds (default: 30)
     /// \param digits Number of digits in the OTP (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
-    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise.
+    ///         The +1 step check is skipped when the computed counter equals
+    ///         std::numeric_limits<uint64_t>::max().
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     inline bool is_totp_token_valid(
             int token,
@@ -235,7 +241,9 @@ namespace hmac {
     /// \param period Time step in seconds (default: 30)
     /// \param digits Expected number of digits in the OTP (default: 6)
     /// \param hash_type Hash algorithm to use (default: SHA1)
-    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise.
+    ///         The +1 step check is skipped when the computed counter equals
+    ///         std::numeric_limits<uint64_t>::max().
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     bool is_totp_token_valid(
             int token,
@@ -252,7 +260,9 @@ namespace hmac {
     /// \param period Time step in seconds (default: 30)
     /// \param digits Number of digits in the OTP (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
-    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise.
+    ///         The +1 step check is skipped when the computed counter equals
+    ///         std::numeric_limits<uint64_t>::max().
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     template<typename T>
     inline bool is_totp_token_valid(
@@ -272,7 +282,9 @@ namespace hmac {
     /// \param period Time step in seconds (default: 30)
     /// \param digits Number of digits in the OTP (default: 6)
     /// \param hash_type Hash function to use (default: SHA1)
-    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
+    /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise.
+    ///         The +1 step check is skipped when the computed counter equals
+    ///         std::numeric_limits<uint64_t>::max().
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     inline bool is_totp_token_valid(
             int token,
