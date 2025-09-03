@@ -1,6 +1,7 @@
 #include "hmac_utils.hpp"
 #include <ctime>
 #include <stdexcept>
+#include <limits>
 
 namespace hmac {
 
@@ -149,7 +150,9 @@ namespace hmac {
         }
         uint64_t counter = timestamp / period;
         if (token == get_hotp_code(key_ptr, key_len, counter, digits, hash_type)) return true;
-        if (token == get_hotp_code(key_ptr, key_len, counter + 1, digits, hash_type)) return true;
+        if (counter != std::numeric_limits<uint64_t>::max() &&
+            token == get_hotp_code(key_ptr, key_len, counter + 1, digits, hash_type))
+            return true;
         if (counter > 0 &&
             token == get_hotp_code(key_ptr, key_len, counter - 1, digits, hash_type))
             return true;
@@ -177,7 +180,9 @@ namespace hmac {
         uint64_t timestamp = static_cast<uint64_t>(now);
         uint64_t counter = timestamp / period;
         if (token == get_hotp_code(key_ptr, key_len, counter, digits, hash_type)) return true;
-        if (token == get_hotp_code(key_ptr, key_len, counter + 1, digits, hash_type)) return true;
+        if (counter != std::numeric_limits<uint64_t>::max() &&
+            token == get_hotp_code(key_ptr, key_len, counter + 1, digits, hash_type))
+            return true;
         if (counter > 0 &&
             token == get_hotp_code(key_ptr, key_len, counter - 1, digits, hash_type))
             return true;
