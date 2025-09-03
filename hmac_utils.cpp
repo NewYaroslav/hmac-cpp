@@ -85,9 +85,9 @@ namespace hmac {
     int get_totp_code(
             const void* key_ptr,
             size_t key_len,
-        int period,
-        int digits,
-        TypeHash hash_type) {
+            int period,
+            int digits,
+            TypeHash hash_type) {
         uint64_t timestamp = static_cast<uint64_t>(std::time(nullptr));
         return get_totp_code_at(key_ptr, key_len, timestamp, period, digits, hash_type);
     }
