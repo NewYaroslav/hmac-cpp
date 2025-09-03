@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <stdexcept>
 #include "hmac.hpp"
 #include "hmac_utils.hpp"
 
@@ -66,6 +67,19 @@ int main() {
     std::cout << "Token = " << timed_token << std::endl;
     bool valid_fp = hmac::is_token_valid(timed_token, key, fingerprint, 60);
     std::cout << "Token valid (with fingerprint)? = " << (valid_fp ? "YES" : "NO") << std::endl;
+
+    // HMAC TIME TOKEN with invalid interval
+    print_section("HMAC-TIMED TOKEN (invalid interval)");
+    try {
+        hmac::generate_time_token(key, 0);
+    } catch (const std::invalid_argument& e) {
+        std::cout << "generate_time_token error: " << e.what() << std::endl;
+    }
+    try {
+        hmac::is_token_valid(time_token, key, 0);
+    } catch (const std::invalid_argument& e) {
+        std::cout << "is_token_valid error: " << e.what() << std::endl;
+    }
 
     // TOTP
     std::string totp_key = "12345678901234567890"; // raw binary string (not base32!)

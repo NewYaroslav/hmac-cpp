@@ -185,6 +185,16 @@ std::string token = hmac::generate_time_token(secret_key, fingerprint, 60);
 bool is_valid = hmac::is_token_valid(token, secret_key, fingerprint, 60);
 ```
 
+If `interval_sec` is not positive, the functions throw `std::invalid_argument`:
+
+```cpp
+try {
+    hmac::generate_time_token(secret_key, 0);
+} catch (const std::invalid_argument& e) {
+    std::cout << e.what();
+}
+```
+
 This is useful for stateless authentication, API protection, and one-time tokens.
 
 ## 📄 Example
