@@ -7,6 +7,12 @@
 
 namespace hmac {
 
+    /// \brief Compares two strings in constant time
+    /// \param a First string
+    /// \param b Second string
+    /// \return true if both strings are equal
+    bool constant_time_equals(const std::string &a, const std::string &b);
+
     /// \brief Generates a time-based HMAC-SHA256 token
     /// \param key Secret key used for HMAC
     /// \param interval_sec Interval in seconds that defines token rotation. Must be positive. Default is 60 seconds
