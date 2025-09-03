@@ -54,6 +54,9 @@ namespace hmac {
     string to_hex(const string& str, bool is_upper = false) {
         uchar bytes[];
         StringToCharArray(str, bytes, 0, -1, CP_UTF8);
+        int len = ArraySize(bytes);
+        if (len > 0 && bytes[len - 1] == '\0') len -= 1;
+        ArrayResize(bytes, len);
         return to_hex(bytes, is_upper);
     }
     
