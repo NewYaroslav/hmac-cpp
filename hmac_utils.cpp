@@ -111,11 +111,11 @@ namespace hmac {
             int period,
             int digits,
             TypeHash hash_type) {
-        int64_t counter = static_cast<int64_t>(timestamp / period);
-        if (token == get_hotp_code(key_ptr, key_len, static_cast<uint64_t>(counter), digits, hash_type)) return true;
-        if (token == get_hotp_code(key_ptr, key_len, static_cast<uint64_t>(counter + 1), digits, hash_type)) return true;
+        uint64_t counter = timestamp / period;
+        if (token == get_hotp_code(key_ptr, key_len, counter, digits, hash_type)) return true;
+        if (token == get_hotp_code(key_ptr, key_len, counter + 1, digits, hash_type)) return true;
         if (counter > 0 &&
-            token == get_hotp_code(key_ptr, key_len, static_cast<uint64_t>(counter - 1), digits, hash_type))
+            token == get_hotp_code(key_ptr, key_len, counter - 1, digits, hash_type))
             return true;
         return false;
     }
@@ -128,11 +128,11 @@ namespace hmac {
             int digits,
             TypeHash hash_type) {
         uint64_t timestamp = static_cast<uint64_t>(std::time(nullptr));
-        int64_t counter = static_cast<int64_t>(timestamp / period);
-        if (token == get_hotp_code(key_ptr, key_len, static_cast<uint64_t>(counter), digits, hash_type)) return true;
-        if (token == get_hotp_code(key_ptr, key_len, static_cast<uint64_t>(counter + 1), digits, hash_type)) return true;
+        uint64_t counter = timestamp / period;
+        if (token == get_hotp_code(key_ptr, key_len, counter, digits, hash_type)) return true;
+        if (token == get_hotp_code(key_ptr, key_len, counter + 1, digits, hash_type)) return true;
         if (counter > 0 &&
-            token == get_hotp_code(key_ptr, key_len, static_cast<uint64_t>(counter - 1), digits, hash_type))
+            token == get_hotp_code(key_ptr, key_len, counter - 1, digits, hash_type))
             return true;
         return false;
     }
