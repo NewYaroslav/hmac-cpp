@@ -45,7 +45,7 @@ namespace hmac_hash {
 
     protected:
         void transform(const uchar &message[], int block_nb);
-        int m_tot_len;
+        ulong m_tot_len;
         int m_len;
         uchar m_block[2 * SHA384_512_BLOCK_SIZE];
         ulong m_h[8];
@@ -169,19 +169,23 @@ namespace hmac_hash {
         rem_len = new_len % SHA384_512_BLOCK_SIZE;
         ArrayCopy(m_block, shifted_message, 0, block_nb * SHA384_512_BLOCK_SIZE, rem_len);
         m_len = rem_len;
-        m_tot_len += (block_nb + 1) * SHA384_512_BLOCK_SIZE;
+        m_tot_len += (ulong)(block_nb + 1) * SHA384_512_BLOCK_SIZE;
     }
 
     void SHA512::finish(uchar &digest[]) {
         int block_nb;
         int pm_len;
-        int len_b;
+        ulong len_b;
         int i;
         block_nb = 1 + ((SHA384_512_BLOCK_SIZE - 17) < (m_len % SHA384_512_BLOCK_SIZE));
         len_b = (m_tot_len + m_len) << 3;
         pm_len = block_nb * SHA384_512_BLOCK_SIZE;
         for (int k = m_len; k < pm_len; ++k) m_block[k] = 0;
         m_block[m_len] = 0x80;
+        m_block[pm_len - 8] = (uchar)((len_b >> 56) & 0xFF);
+        m_block[pm_len - 7] = (uchar)((len_b >> 48) & 0xFF);
+        m_block[pm_len - 6] = (uchar)((len_b >> 40) & 0xFF);
+        m_block[pm_len - 5] = (uchar)((len_b >> 32) & 0xFF);
         m_block[pm_len - 4] = (uchar)((len_b >> 24) & 0xFF);
         m_block[pm_len - 3] = (uchar)((len_b >> 16) & 0xFF);
         m_block[pm_len - 2] = (uchar)((len_b >> 8) & 0xFF);
