@@ -58,6 +58,14 @@ TEST(UtilsTest, ConstantTimeEqualsMismatch) {
     EXPECT_FALSE(hmac::constant_time_equals("alpha", "alphabet"));
 }
 
+TEST(UtilsTest, ConstantTimeEqualsLengthMultiples256) {
+    std::string base(256, 'a');
+    std::string plus256 = base + std::string(256, '\0');
+    std::string plus512 = base + std::string(512, '\0');
+    EXPECT_FALSE(hmac::constant_time_equals(base, plus256));
+    EXPECT_FALSE(hmac::constant_time_equals(base, plus512));
+}
+
 TEST(HMACTest, SHA256) {
     const std::string key = "12345";
     const std::string input = "grape";

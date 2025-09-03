@@ -7,7 +7,7 @@ namespace hmac {
  
     bool constant_time_equals(const std::string &a, const std::string &b) {
         size_t max_len = a.size() > b.size() ? a.size() : b.size();
-        unsigned char diff = static_cast<unsigned char>(a.size() ^ b.size());
+        unsigned int diff = (a.size() != b.size());
         for (size_t i = 0; i < max_len; ++i) {
             unsigned char ac = i < a.size() ? static_cast<unsigned char>(a[i]) : 0;
             unsigned char bc = i < b.size() ? static_cast<unsigned char>(b[i]) : 0;
