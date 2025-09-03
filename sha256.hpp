@@ -42,6 +42,7 @@
 #ifndef _HMAC_SHA256_HPP_INCLUDED
 #define _HMAC_SHA256_HPP_INCLUDED
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <cstdint>
