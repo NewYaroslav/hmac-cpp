@@ -15,9 +15,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        std: [11, 17]
     steps:
       - uses: actions/checkout@v3
       - name: Build and Run Tests
         run: |
           sudo apt-get update && sudo apt-get install -y cmake
-          ./scripts/run_tests.sh
+          CXX_STANDARD=${{ matrix.std }} ./scripts/run_tests.sh

@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(hmac_cpp LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 11)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_EXAMPLE "Build the example program" ON)
