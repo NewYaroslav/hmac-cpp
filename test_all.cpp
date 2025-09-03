@@ -45,6 +45,17 @@ TEST(HashTest, SHA512LargeInput) {
               "596d71e02b4eca81f668215d3e9b9e5a143a9c3d8d1981608e0811b20e290961ec2a7e7ecd0e275366cf10aa5f7ab1e052b868c5fa57b6d2bd6e75477b2ecea7");
 }
 
+TEST(HashTest, InvalidTypeThrowsString) {
+    auto invalid = static_cast<hmac::TypeHash>(999);
+    EXPECT_THROW(hmac::get_hash("grape", invalid), std::invalid_argument);
+}
+
+TEST(HashTest, InvalidTypeThrowsBuffer) {
+    auto invalid = static_cast<hmac::TypeHash>(999);
+    const char data[] = "grape";
+    EXPECT_THROW(hmac::get_hash(data, sizeof(data) - 1, invalid), std::invalid_argument);
+}
+
 TEST(UtilsTest, ToHex) {
     EXPECT_EQ(hmac::to_hex("012345"), "303132333435");
 }
@@ -91,6 +102,13 @@ TEST(HMACTest, InvalidTypeThrows) {
     const char* msg = "abc";
     auto invalid = static_cast<hmac::TypeHash>(999);
     EXPECT_THROW(hmac::get_hmac(key, 3, msg, 3, invalid), std::invalid_argument);
+}
+
+TEST(HMACTest, InvalidTypeThrowsString) {
+    const std::string key = "key";
+    const std::string msg = "abc";
+    auto invalid = static_cast<hmac::TypeHash>(999);
+    EXPECT_THROW(hmac::get_hmac(key, msg, invalid), std::invalid_argument);
 }
 
 TEST(TOTPTest, AtTime) {
