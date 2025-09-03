@@ -1,0 +1,35 @@
+name: CI-Win
+
+on:
+  push:
+    branches:
+      - main
+      - release/**
+      - stable
+  pull_request:
+    branches:
+      - main
+      - release/**
+      - codex/**
+
+jobs:
+  Tests-Win:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        std: [11, 17]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: MINGW64
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+      - name: Build and Run Tests
+        shell: msys2 {0}
+        run: |
+          export CXX_STANDARD=${{ matrix.std }}
+          ./scripts/run_tests.sh
