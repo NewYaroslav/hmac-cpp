@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <stdexcept>
+#include <cstdint>
 #include "hmac.hpp"
 
 namespace hmac {
@@ -123,6 +124,8 @@ namespace hmac {
         }
 
         // Step 3: Compute inner hash
+        if (msg_len > SIZE_MAX - block_size)
+            throw std::overflow_error("msg_len + block_size overflow");
         std::vector<uint8_t> inner_data;
         inner_data.reserve(block_size + msg_len);
         inner_data.insert(inner_data.end(), ikeypad.begin(), ikeypad.end());
@@ -130,6 +133,8 @@ namespace hmac {
         std::vector<uint8_t> inner_hash = get_hash(inner_data.data(), inner_data.size(), type);
 
         // Step 4: Compute final HMAC
+        if (digest_size > SIZE_MAX - block_size)
+            throw std::overflow_error("digest_size + block_size overflow");
         std::vector<uint8_t> outer_data;
         outer_data.reserve(block_size + digest_size);
         outer_data.insert(outer_data.end(), okeypad.begin(), okeypad.end());

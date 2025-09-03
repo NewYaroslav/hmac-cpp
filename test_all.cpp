@@ -115,6 +115,15 @@ TEST(HMACTest, InvalidTypeThrows) {
     EXPECT_THROW(hmac::get_hmac(key, 3, msg, 3, invalid), std::invalid_argument);
 }
 
+TEST(HMACTest, MsgLenOverflowThrows) {
+    const char key[] = "key";
+    const char msg[] = "a";
+    size_t huge_len = std::numeric_limits<size_t>::max() -
+                       hmac_hash::SHA256::SHA224_256_BLOCK_SIZE + 1;
+    EXPECT_THROW(hmac::get_hmac(key, sizeof(key) - 1, msg, huge_len,
+                                hmac::TypeHash::SHA256), std::overflow_error);
+}
+
 TEST(HMACTest, InvalidTypeThrowsString) {
     const std::string key = "key";
     const std::string msg = "abc";
