@@ -2,8 +2,16 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
+#include <limits>
+
 #include "hmac.hpp"
 #include "hmac_utils.hpp"
+
+static std::time_t mock_time_value = 0;
+extern "C" std::time_t time(std::time_t* t) {
+    if (t) *t = mock_time_value;
+    return mock_time_value;
+}
 
 TEST(HashTest, SHA1) {
     EXPECT_EQ(hmac_hash::sha1("grape"),
@@ -69,6 +77,13 @@ TEST(HMACTest, NullPointersThrow) {
     EXPECT_THROW(hmac::get_hmac(key, 3, nullptr, 1, hmac::TypeHash::SHA256), std::invalid_argument);
 }
 
+TEST(HMACTest, InvalidTypeThrows) {
+    const char* key = "key";
+    const char* msg = "abc";
+    auto invalid = static_cast<hmac::TypeHash>(999);
+    EXPECT_THROW(hmac::get_hmac(key, 3, msg, 3, invalid), std::invalid_argument);
+}
+
 TEST(TOTPTest, AtTime) {
     const std::string totp_key = "12345678901234567890";
     uint64_t test_time = 1234567890;
@@ -81,6 +96,56 @@ TEST(TokenTest, InvalidInterval) {
     std::string token = hmac::generate_time_token(key, 60);
     EXPECT_THROW(hmac::generate_time_token(key, 0), std::invalid_argument);
     EXPECT_THROW(hmac::is_token_valid(token, key, 0), std::invalid_argument);
+}
+
+TEST(TokenBoundaryTest, MaxTime) {
+    const std::string key = "12345";
+    const int interval = 30;
+    mock_time_value = std::numeric_limits<std::time_t>::max();
+    std::string token = hmac::generate_time_token(key, interval);
+    EXPECT_TRUE(hmac::is_token_valid(token, key, interval));
+    mock_time_value = std::numeric_limits<std::time_t>::max() - interval;
+    std::string token_prev = hmac::generate_time_token(key, interval);
+    mock_time_value = std::numeric_limits<std::time_t>::max();
+    EXPECT_TRUE(hmac::is_token_valid(token_prev, key, interval));
+}
+
+TEST(TokenBoundaryTest, MinTime) {
+    const std::string key = "12345";
+    const int interval = 30;
+    mock_time_value = std::numeric_limits<std::time_t>::min();
+    std::string token = hmac::generate_time_token(key, interval);
+    EXPECT_TRUE(hmac::is_token_valid(token, key, interval));
+    mock_time_value = std::numeric_limits<std::time_t>::min() + interval;
+    std::string token_next = hmac::generate_time_token(key, interval);
+    mock_time_value = std::numeric_limits<std::time_t>::min();
+    EXPECT_TRUE(hmac::is_token_valid(token_next, key, interval));
+}
+
+TEST(TokenBoundaryFingerprintTest, MaxTime) {
+    const std::string key = "12345";
+    const std::string fingerprint = "fp";
+    const int interval = 30;
+    mock_time_value = std::numeric_limits<std::time_t>::max();
+    std::string token = hmac::generate_time_token(key, fingerprint, interval);
+    EXPECT_TRUE(hmac::is_token_valid(token, key, fingerprint, interval));
+    mock_time_value = std::numeric_limits<std::time_t>::max() - interval;
+    std::string token_prev = hmac::generate_time_token(key, fingerprint, interval);
+    mock_time_value = std::numeric_limits<std::time_t>::max();
+    EXPECT_TRUE(hmac::is_token_valid(token_prev, key, fingerprint, interval));
+}
+
+TEST(TokenBoundaryFingerprintTest, MinTime) {
+    const std::string key = "12345";
+    const std::string fingerprint = "fp";
+    const int interval = 30;
+    mock_time_value = std::numeric_limits<std::time_t>::min();
+    std::string token = hmac::generate_time_token(key, fingerprint, interval);
+    EXPECT_TRUE(hmac::is_token_valid(token, key, fingerprint, interval));
+    mock_time_value = std::numeric_limits<std::time_t>::min() + interval;
+    std::string token_next = hmac::generate_time_token(key, fingerprint, interval);
+    mock_time_value = std::numeric_limits<std::time_t>::min();
+    EXPECT_TRUE(hmac::is_token_valid(token_next, key, fingerprint, interval));
 }
 
 int main(int argc, char **argv) {

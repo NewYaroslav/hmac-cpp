@@ -36,8 +36,12 @@ namespace hmac {
         }
         std::time_t rounded = (now / interval_sec) * interval_sec;
         if (constant_time_equals(token, get_hmac(key, std::to_string(rounded), hash_type))) return true;
-        if (constant_time_equals(token, get_hmac(key, std::to_string(rounded - interval_sec), hash_type))) return true;
-        if (constant_time_equals(token, get_hmac(key, std::to_string(rounded + interval_sec), hash_type))) return true;
+        if (rounded >= std::numeric_limits<std::time_t>::min() + interval_sec) {
+            if (constant_time_equals(token, get_hmac(key, std::to_string(rounded - interval_sec), hash_type))) return true;
+        }
+        if (rounded <= std::numeric_limits<std::time_t>::max() - interval_sec) {
+            if (constant_time_equals(token, get_hmac(key, std::to_string(rounded + interval_sec), hash_type))) return true;
+        }
         return false;
     }
 
@@ -66,10 +70,14 @@ namespace hmac {
         std::string prefix = "|" + fingerprint;
         std::string payload = std::to_string(rounded) + prefix;
         if (constant_time_equals(token, get_hmac(key, payload, hash_type))) return true;
-        payload = std::to_string(rounded - interval_sec) + prefix;
-        if (constant_time_equals(token, get_hmac(key, payload, hash_type))) return true;
-        payload = std::to_string(rounded + interval_sec) + prefix;
-        if (constant_time_equals(token, get_hmac(key, payload, hash_type))) return true;
+        if (rounded >= std::numeric_limits<std::time_t>::min() + interval_sec) {
+            payload = std::to_string(rounded - interval_sec) + prefix;
+            if (constant_time_equals(token, get_hmac(key, payload, hash_type))) return true;
+        }
+        if (rounded <= std::numeric_limits<std::time_t>::max() - interval_sec) {
+            payload = std::to_string(rounded + interval_sec) + prefix;
+            if (constant_time_equals(token, get_hmac(key, payload, hash_type))) return true;
+        }
         return false;
     }
 
