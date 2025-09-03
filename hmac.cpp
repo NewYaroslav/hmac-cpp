@@ -48,9 +48,9 @@ namespace hmac {
                 ctx.finish(digest);
                 return std::string((const char*)digest, hmac_hash::SHA512::DIGEST_SIZE);
             }
-            default: break;
+            default:
+                throw std::invalid_argument("Unsupported hash type");
         };
-        return std::string();
     }
 
     std::vector<uint8_t> get_hash(const void* data, size_t length, TypeHash type) {
@@ -79,7 +79,8 @@ namespace hmac {
                 ctx.finish(digest.data());
                 return digest;
             }
-            default: return {};
+            default:
+                throw std::invalid_argument("Unsupported hash type");
         }
     }
 
@@ -155,7 +156,7 @@ namespace hmac {
             block_size = hmac_hash::SHA512::SHA384_512_BLOCK_SIZE;
             break;
         default:
-            return std::string();
+            throw std::invalid_argument("Unsupported hash type");
         };
 
         std::string key = key_input;
