@@ -18,7 +18,8 @@
 /* Based on: http://www.zedwood.com/article/cpp-sha1-function
  * Modified by NewYaroslav, 2025-04-15
  */
- 
+
+#include <cstdio>
 #include "sha1.hpp"
 
 /* Help macros */
@@ -246,7 +247,7 @@ namespace hmac_hash {
         char buf[2 * hmac_hash::SHA1::DIGEST_SIZE + 1];
         std::fill(buf, buf + (2 * hmac_hash::SHA1::DIGEST_SIZE + 1), '\0');
         for(size_t i = 0; i < hmac_hash::SHA1::DIGEST_SIZE; ++i) {
-            sprintf(buf + i * 2, "%02x", digest[i]);
+            std::snprintf(buf + i * 2, sizeof(buf) - i * 2, "%02x", digest[i]);
         }
         return std::string(buf, (2 * hmac_hash::SHA1::DIGEST_SIZE));
     }
