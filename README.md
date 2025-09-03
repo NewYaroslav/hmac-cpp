@@ -1,5 +1,8 @@
 # hmac-cpp [🇷🇺 README-RU](./README-RU.md)
 
+[![Linux](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Linux.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Linux.yml)
+[![Windows](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Win.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Win.yml)
+
 A lightweight `C++11` library for computing `HMAC` (hash-based message authentication codes), supporting `SHA1`, `SHA256`, `SHA512`, as well as one-time passwords compliant with `HOTP` (RFC 4226) and `TOTP` (RFC 6238).
 
 ## 🚀 Features
