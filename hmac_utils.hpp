@@ -12,6 +12,7 @@ namespace hmac {
     /// \param interval_sec Interval in seconds that defines token rotation. Must be positive. Default is 60 seconds
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512). Default is SHA256
     /// \return Hex-encoded HMAC-SHA256 of the rounded time value
+    /// \throws std::runtime_error if the system time cannot be retrieved
     std::string generate_time_token(const std::string &key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
 
     /// \brief Validates a time-based HMAC-SHA256 token with ±1 interval tolerance
@@ -20,6 +21,7 @@ namespace hmac {
     /// \param interval_sec Interval in seconds that defines token rotation. Must be positive. Default is 60 seconds
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512). Default is SHA256
     /// \return true if the token is valid within the ±1 interval range; false otherwise
+    /// \throws std::runtime_error if the system time cannot be retrieved
     bool is_token_valid(const std::string &token, const std::string &key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
 
     /// \brief Generates a time-based HMAC-SHA256 token with fingerprint binding
@@ -28,6 +30,7 @@ namespace hmac {
     /// \param interval_sec Interval in seconds that defines token rotation. Must be positive. Default is 60 seconds
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512). Default is SHA256
     /// \return Hex-encoded HMAC-SHA256 of the concatenated timestamp and fingerprint
+    /// \throws std::runtime_error if the system time cannot be retrieved
     std::string generate_time_token(const std::string &key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
 
     /// \brief Validates a fingerprint-bound HMAC-SHA256 token with ±1 interval tolerance
@@ -37,6 +40,7 @@ namespace hmac {
     /// \param interval_sec Interval in seconds that defines token rotation. Must be positive. Default is 60 seconds
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512). Default is SHA256
     /// \return true if the token is valid within the ±1 interval range; false otherwise
+    /// \throws std::runtime_error if the system time cannot be retrieved
     bool is_token_valid(const std::string &token, const std::string &key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
     
     /// \brief Computes HOTP code based on HMAC as defined in RFC 4226
@@ -136,6 +140,7 @@ namespace hmac {
     /// \param hash_type Hash function to use (default: SHA1).
     /// \return TOTP code as an integer.
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9].
+    /// \throws std::runtime_error if the system time cannot be retrieved.
     int get_totp_code(
             const void* key_ptr,
             size_t key_len,
@@ -151,6 +156,7 @@ namespace hmac {
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return TOTP code as an integer
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
+    /// \throws std::runtime_error if the system time cannot be retrieved
     template<typename T>
     inline int get_totp_code(const std::vector<T>& key, int period = 30, int digits = 6, TypeHash hash_type = TypeHash::SHA1) {
         return get_totp_code(key.data(), key.size(), period, digits, hash_type);
@@ -163,6 +169,7 @@ namespace hmac {
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return TOTP code as an integer
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
+    /// \throws std::runtime_error if the system time cannot be retrieved
     inline int get_totp_code(const std::string& key, int period = 30, int digits = 6, TypeHash hash_type = TypeHash::SHA1) {
         return get_totp_code(key.data(), key.size(), period, digits, hash_type);
     }
@@ -237,6 +244,7 @@ namespace hmac {
     /// \param hash_type Hash algorithm to use (default: SHA1)
     /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
+    /// \throws std::runtime_error if the system time cannot be retrieved
     bool is_totp_token_valid(
             int token,
             const void* key_ptr,
@@ -254,6 +262,7 @@ namespace hmac {
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
+    /// \throws std::runtime_error if the system time cannot be retrieved
     template<typename T>
     inline bool is_totp_token_valid(
             int token,
@@ -274,6 +283,7 @@ namespace hmac {
     /// \param hash_type Hash function to use (default: SHA1)
     /// \return true if the token is valid within [-1, 0, +1] time step range; false otherwise
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
+    /// \throws std::runtime_error if the system time cannot be retrieved
     inline bool is_totp_token_valid(
             int token,
             const std::string& key,
