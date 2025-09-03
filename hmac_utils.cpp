@@ -8,7 +8,10 @@ namespace hmac {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
-        auto now = std::time(nullptr);
+        std::time_t now = std::time(nullptr);
+        if (now == static_cast<std::time_t>(-1)) {
+            throw std::runtime_error("std::time failed");
+        }
         std::time_t rounded = (now / interval_sec) * interval_sec;
         return get_hmac(key, std::to_string(rounded), hash_type);
     }
@@ -17,7 +20,10 @@ namespace hmac {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
-        auto now = std::time(nullptr);
+        std::time_t now = std::time(nullptr);
+        if (now == static_cast<std::time_t>(-1)) {
+            throw std::runtime_error("std::time failed");
+        }
         std::time_t rounded = (now / interval_sec) * interval_sec;
         if (token == get_hmac(key, std::to_string(rounded), hash_type)) return true;
         if (token == get_hmac(key, std::to_string(rounded - interval_sec), hash_type)) return true;
@@ -29,7 +35,10 @@ namespace hmac {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
-        auto now = std::time(nullptr);
+        std::time_t now = std::time(nullptr);
+        if (now == static_cast<std::time_t>(-1)) {
+            throw std::runtime_error("std::time failed");
+        }
         std::time_t rounded = (now / interval_sec) * interval_sec;
         std::string payload = std::to_string(rounded) + "|" + fingerprint;
         return get_hmac(key, payload, hash_type);
@@ -39,7 +48,10 @@ namespace hmac {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
-        auto now = std::time(nullptr);
+        std::time_t now = std::time(nullptr);
+        if (now == static_cast<std::time_t>(-1)) {
+            throw std::runtime_error("std::time failed");
+        }
         std::time_t rounded = (now / interval_sec) * interval_sec;
         std::string prefix = "|" + fingerprint;
         std::string payload = std::to_string(rounded) + prefix;
@@ -112,7 +124,11 @@ namespace hmac {
         if (digits < 1 || digits > 9) {
             throw std::invalid_argument("TOTP: digits must be in range [1, 9]");
         }
-        uint64_t timestamp = static_cast<uint64_t>(std::time(nullptr));
+        std::time_t now = std::time(nullptr);
+        if (now == static_cast<std::time_t>(-1)) {
+            throw std::runtime_error("std::time failed");
+        }
+        uint64_t timestamp = static_cast<uint64_t>(now);
         return get_totp_code_at(key_ptr, key_len, timestamp, period, digits, hash_type);
     }
 
@@ -154,7 +170,11 @@ namespace hmac {
         if (digits < 1 || digits > 9) {
             throw std::invalid_argument("TOTP: digits must be in range [1, 9]");
         }
-        uint64_t timestamp = static_cast<uint64_t>(std::time(nullptr));
+        std::time_t now = std::time(nullptr);
+        if (now == static_cast<std::time_t>(-1)) {
+            throw std::runtime_error("std::time failed");
+        }
+        uint64_t timestamp = static_cast<uint64_t>(now);
         uint64_t counter = timestamp / period;
         if (token == get_hotp_code(key_ptr, key_len, counter, digits, hash_type)) return true;
         if (token == get_hotp_code(key_ptr, key_len, counter + 1, digits, hash_type)) return true;
