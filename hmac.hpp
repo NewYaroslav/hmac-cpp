@@ -10,7 +10,7 @@ namespace hmac {
 
     /// \brief Type of the hash function used
     enum class TypeHash {
-        SHA1,   ///< Use SHA256
+        SHA1,   ///< Use SHA1
         SHA256, ///< Use SHA256
         SHA512, ///< Use SHA512
     };
