@@ -19,6 +19,7 @@
  * Modified by NewYaroslav, 2025-04-15
  */
  
+#include <algorithm>
 #include "sha1.hpp"
 
 /* Help macros */

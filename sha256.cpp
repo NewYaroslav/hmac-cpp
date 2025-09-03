@@ -39,6 +39,7 @@
  * Исправления: 18.06.2020 Elektro Yar
  */
 
+#include <algorithm>
 #include <cstring>
 //#include <fstream>
 #include "sha256.hpp"
