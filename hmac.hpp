@@ -48,12 +48,13 @@ namespace hmac {
     }
 
     /// \brief Computes HMAC for raw binary data using the specified hash function.
-    /// \param key_ptr Pointer to the key buffer
+    /// \param key_ptr Pointer to the key buffer; must be non-null if key_len > 0
     /// \param key_len Length of the key in bytes
-    /// \param msg_ptr Pointer to the message buffer
+    /// \param msg_ptr Pointer to the message buffer; must be non-null if msg_len > 0
     /// \param msg_len Length of the message in bytes
     /// \param type Hash function type
     /// \return HMAC result as a vector of bytes
+    /// \throws std::invalid_argument If any pointer is null while the corresponding length is non-zero
     std::vector<uint8_t> get_hmac(const void* key_ptr, size_t key_len, const void* msg_ptr, size_t msg_len, TypeHash type);
 
     /// \brief Computes HMAC from key and message byte vectors using the specified hash function
