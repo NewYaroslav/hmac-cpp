@@ -131,6 +131,11 @@ TEST(HMACTest, InvalidTypeThrowsString) {
     EXPECT_THROW(hmac::get_hmac(key, msg, invalid), std::invalid_argument);
 }
 
+TEST(HOTPTest, ShortDigestThrows) {
+    std::vector<uint8_t> short_digest = {0x00, 0x01, 0x02};
+    EXPECT_THROW(hmac::detail::hotp_from_digest(short_digest, 6), std::runtime_error);
+}
+
 TEST(TOTPTest, AtTime) {
     const std::string totp_key = "12345678901234567890";
     uint64_t test_time = 1234567890;

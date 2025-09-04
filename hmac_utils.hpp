@@ -81,6 +81,15 @@ namespace hmac {
     inline int get_hotp_code(const std::string& key, uint64_t counter, int digits = 6, TypeHash hash_type = TypeHash::SHA1) {
         return get_hotp_code(key.data(), key.size(), counter, digits, hash_type);
     }
+
+    namespace detail {
+        /// \brief Computes HOTP code from a precomputed HMAC digest
+        /// \param hmac_result HMAC digest bytes
+        /// \param digits Desired number of digits in the OTP (1-9)
+        /// \return One-Time Password (OTP) as an integer
+        /// \throws std::runtime_error if the digest is too short for dynamic truncation
+        int hotp_from_digest(const std::vector<uint8_t>& hmac_result, int digits);
+    }
     
     /// \brief Computes TOTP (Time-Based One-Time Password) code for a specific timestamp
     ///        Implements RFC 6238

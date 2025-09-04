@@ -88,6 +88,29 @@ namespace hmac {
         return false;
     }
 
+    namespace detail {
+        int hotp_from_digest(const std::vector<uint8_t>& hmac_result, int digits) {
+            if (hmac_result.empty()) {
+                throw std::runtime_error("HOTP: HMAC result too short");
+            }
+            int offset = hmac_result.back() & 0x0F;
+            if (hmac_result.size() < static_cast<size_t>(offset) + 4) {
+                throw std::runtime_error("HOTP: HMAC result too short");
+            }
+            uint32_t bin_code =
+                ((hmac_result[offset]     & 0x7F) << 24) |
+                ((hmac_result[offset + 1] & 0xFF) << 16) |
+                ((hmac_result[offset + 2] & 0xFF) << 8)  |
+                ((hmac_result[offset + 3] & 0xFF));
+            static const uint64_t divisor[] = {
+                10UL, 100UL, 1000UL, 10000UL,
+                100000UL, 1000000UL, 10000000UL,
+                100000000UL, 1000000000UL
+            };
+            return bin_code % divisor[digits - 1];
+        }
+    }
+
     int get_hotp_code(const void* key_ptr, size_t key_len, uint64_t counter, int digits, TypeHash hash_type) {
         if (digits < 1 || digits > 9) throw std::invalid_argument("HOTP: digits must be in range [1, 9]");
 
@@ -101,21 +124,8 @@ namespace hmac {
         // Step 2: Compute HMAC
         std::vector<uint8_t> hmac_result = hmac::get_hmac(key_ptr, key_len, counter_bytes, 8, hash_type);
 
-        // Step 3: Dynamic truncation
-        int offset = hmac_result.back() & 0x0F;
-        uint32_t bin_code =
-            ((hmac_result[offset]     & 0x7F) << 24) |
-            ((hmac_result[offset + 1] & 0xFF) << 16) |
-            ((hmac_result[offset + 2] & 0xFF) << 8)  |
-            ((hmac_result[offset + 3] & 0xFF));
-
-        // Step 4: Modulo to get N-digit code
-        static const uint64_t divisor[] = {
-            10UL, 100UL, 1000UL, 10000UL, 
-            100000UL, 1000000UL, 10000000UL, 
-            100000000UL, 1000000000UL
-        };
-        return bin_code % divisor[digits - 1];
+        // Step 3: Dynamic truncation and modulo
+        return detail::hotp_from_digest(hmac_result, digits);
     }
 
     int get_totp_code_at(
