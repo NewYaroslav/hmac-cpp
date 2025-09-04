@@ -28,3 +28,18 @@ jobs:
         run: cmake --build build
       - name: Run tests
         run: cd build && ctest --output-on-failure
+  vcpkg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+          ./vcpkg/vcpkg install gtest
+      - name: Configure
+        run: cmake -S . -B build -DBUILD_TESTS=ON -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
+      - name: Build
+        run: cmake --build build
+      - name: Run tests
+        run: cd build && ctest --output-on-failure
