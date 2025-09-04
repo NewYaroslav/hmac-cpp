@@ -1,36 +1,39 @@
-#include "hmac_cpp/hmac_utils.hpp"
-#include <cassert>
+#include <gtest/gtest.h>
 #include <limits>
-#include <iostream>
+#include "hmac_cpp/hmac_utils.hpp"
 
-int main() {
+TEST(TotpBoundaryTest, EarlyTimestampValidatesCounterZero) {
     std::string key = "12345678901234567890";
     int digits = 6;
     uint64_t period = 30;
     uint64_t early_timestamp = 5; // less than one period
+    int token = hmac::get_hotp_code(key.data(), key.size(), 0, digits, hmac::TypeHash::SHA1);
+    EXPECT_TRUE(hmac::is_totp_token_valid(token, key.data(), key.size(), early_timestamp, period, digits, hmac::TypeHash::SHA1));
+}
 
-    // Token generated for counter = 0 should be valid at early timestamp
-    int token_counter0 = hmac::get_hotp_code(key.data(), key.size(), 0, digits, hmac::TypeHash::SHA1);
-    bool valid = hmac::is_totp_token_valid(token_counter0, key.data(), key.size(), early_timestamp, period, digits, hmac::TypeHash::SHA1);
-    assert(valid);
-
-    // Token from max counter should NOT be considered valid when timestamp is in the first period
+TEST(TotpBoundaryTest, MaxCounterInvalidAtEarlyTimestamp) {
+    std::string key = "12345678901234567890";
+    int digits = 6;
+    uint64_t period = 30;
+    uint64_t early_timestamp = 5;
     uint64_t max_counter = std::numeric_limits<uint64_t>::max();
-    int token_max = hmac::get_hotp_code(key.data(), key.size(), max_counter, digits, hmac::TypeHash::SHA1);
-    bool valid_max = hmac::is_totp_token_valid(token_max, key.data(), key.size(), early_timestamp, period, digits, hmac::TypeHash::SHA1);
-    assert(!valid_max);
+    int token = hmac::get_hotp_code(key.data(), key.size(), max_counter, digits, hmac::TypeHash::SHA1);
+    EXPECT_FALSE(hmac::is_totp_token_valid(token, key.data(), key.size(), early_timestamp, period, digits, hmac::TypeHash::SHA1));
+}
 
-    // At maximum timestamp, ensure overflow does not validate counter 0 token
+TEST(TotpBoundaryTest, MaxTimestampDoesNotValidateCounterZero) {
+    std::string key = "12345678901234567890";
+    int digits = 6;
     uint64_t max_timestamp = std::numeric_limits<uint64_t>::max();
-    int token_zero = hmac::get_hotp_code(key.data(), key.size(), 0, digits, hmac::TypeHash::SHA1);
-    bool valid_zero_at_max = hmac::is_totp_token_valid(token_zero, key.data(), key.size(), max_timestamp, 1, digits, hmac::TypeHash::SHA1);
-    assert(!valid_zero_at_max);
+    int token = hmac::get_hotp_code(key.data(), key.size(), 0, digits, hmac::TypeHash::SHA1);
+    EXPECT_FALSE(hmac::is_totp_token_valid(token, key.data(), key.size(), max_timestamp, 1, digits, hmac::TypeHash::SHA1));
+}
 
-    // Token for max counter should still be valid at that timestamp
-    int token_max_ts = hmac::get_hotp_code(key.data(), key.size(), max_counter, digits, hmac::TypeHash::SHA1);
-    bool valid_max_ts = hmac::is_totp_token_valid(token_max_ts, key.data(), key.size(), max_timestamp, 1, digits, hmac::TypeHash::SHA1);
-    assert(valid_max_ts);
-
-    std::cout << "TOTP tests passed" << std::endl;
-    return 0;
+TEST(TotpBoundaryTest, MaxTimestampValidatesMaxCounter) {
+    std::string key = "12345678901234567890";
+    int digits = 6;
+    uint64_t max_timestamp = std::numeric_limits<uint64_t>::max();
+    uint64_t max_counter = std::numeric_limits<uint64_t>::max();
+    int token = hmac::get_hotp_code(key.data(), key.size(), max_counter, digits, hmac::TypeHash::SHA1);
+    EXPECT_TRUE(hmac::is_totp_token_valid(token, key.data(), key.size(), max_timestamp, 1, digits, hmac::TypeHash::SHA1));
 }
