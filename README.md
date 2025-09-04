@@ -43,11 +43,18 @@ _install/
 │   ├── sha1.hpp
 │   ├── sha256.hpp
 │   └── sha512.hpp
-└── lib/
-    └── libhmac.a
+    └── lib/
+        └── libhmac_cpp.a
 ```
 
 Predefined `.bat` scripts for MinGW builds are also available: `build_*.bat`.
+
+After installation, the package can be found and linked in other projects using `find_package`:
+
+```cmake
+find_package(hmac_cpp CONFIG REQUIRED)
+target_link_libraries(my_app PRIVATE hmac_cpp::hmac_cpp)
+```
 
 ## 📦 MQL5 Compatibility
 

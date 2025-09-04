@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(hmac_cpp LANGUAGES CXX)
+project(hmac_cpp VERSION 0.1.0 LANGUAGES CXX)
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 11)
@@ -25,17 +25,38 @@ set(HMAC_HEADERS
     include/hmac_cpp/sha512.hpp
 )
 
-add_library(hmac STATIC ${HMAC_SOURCES})
-target_include_directories(hmac PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_library(hmac_cpp STATIC ${HMAC_SOURCES})
+target_include_directories(hmac_cpp PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 
 if(BUILD_EXAMPLE)
     add_executable(example example.cpp)
-    target_link_libraries(example PRIVATE hmac)
+    target_link_libraries(example PRIVATE hmac_cpp)
     target_include_directories(example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endif()
 
-install(TARGETS hmac DESTINATION lib)
+include(CMakePackageConfigHelpers)
+install(TARGETS hmac_cpp EXPORT hmac_cppTargets DESTINATION lib)
 install(FILES ${HMAC_HEADERS} DESTINATION include/hmac_cpp)
+install(EXPORT hmac_cppTargets NAMESPACE hmac_cpp:: DESTINATION lib/cmake/hmac_cpp)
+
+configure_package_config_file(
+    cmake/hmac_cppConfig.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/hmac_cppConfig.cmake"
+    INSTALL_DESTINATION lib/cmake/hmac_cpp
+)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/hmac_cppConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/hmac_cppConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/hmac_cppConfigVersion.cmake"
+    DESTINATION lib/cmake/hmac_cpp
+)
 
 if(BUILD_TESTS)
     enable_testing()
@@ -46,7 +67,7 @@ if(BUILD_TESTS)
     )
     FetchContent_MakeAvailable(googletest)
     add_executable(test_all test_all.cpp)
-    target_link_libraries(test_all PRIVATE hmac gtest_main)
+    target_link_libraries(test_all PRIVATE hmac_cpp gtest_main)
     target_include_directories(test_all PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     add_test(NAME test_all COMMAND test_all)
 endif()
