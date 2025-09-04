@@ -26,7 +26,7 @@ namespace hmac {
         if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
-        std::time_t rounded = (now / interval_sec) * interval_sec;
+        std::time_t rounded = now - (now % interval_sec);
         return get_hmac(key, std::to_string(rounded), hash_type);
     }
 
@@ -39,7 +39,7 @@ namespace hmac {
         if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
-        std::time_t rounded = (now / interval_sec) * interval_sec;
+        std::time_t rounded = now - (now % interval_sec);
         if (constant_time_equals(token, get_hmac(key, std::to_string(rounded), hash_type))) return true;
         if (rounded >= std::numeric_limits<std::time_t>::min() + interval_sec) {
             if (constant_time_equals(token, get_hmac(key, std::to_string(rounded - interval_sec), hash_type))) return true;
@@ -59,7 +59,7 @@ namespace hmac {
         if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
-        std::time_t rounded = (now / interval_sec) * interval_sec;
+        std::time_t rounded = now - (now % interval_sec);
         std::string payload = std::to_string(rounded) + "|" + fingerprint;
         return get_hmac(key, payload, hash_type);
     }
@@ -73,7 +73,7 @@ namespace hmac {
         if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
-        std::time_t rounded = (now / interval_sec) * interval_sec;
+        std::time_t rounded = now - (now % interval_sec);
         std::string prefix = "|" + fingerprint;
         std::string payload = std::to_string(rounded) + prefix;
         if (constant_time_equals(token, get_hmac(key, payload, hash_type))) return true;
@@ -164,6 +164,9 @@ namespace hmac {
         if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
         }
+        if (now < 0) {
+            throw std::runtime_error("std::time returned negative value");
+        }
         uint64_t timestamp = static_cast<uint64_t>(now);
         return get_totp_code_at(key_ptr, key_len, timestamp, period, digits, hash_type);
     }
@@ -212,6 +215,9 @@ namespace hmac {
         std::time_t now = std::time(nullptr);
         if (now == static_cast<std::time_t>(-1) && errno != 0) {
             throw std::runtime_error("std::time failed");
+        }
+        if (now < 0) {
+            throw std::runtime_error("std::time returned negative value");
         }
         uint64_t timestamp = static_cast<uint64_t>(now);
         uint64_t counter = timestamp / period;

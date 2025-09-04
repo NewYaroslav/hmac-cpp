@@ -220,22 +220,33 @@ TEST(TimeErrorTest, MinusOneWithErrno) {
     mock_time_value = 0;
 }
 
-TEST(TotpTimeErrorTest, MinusOneNoErrno) {
+TEST(TotpTimeErrorTest, NegativeTimeThrows) {
     const std::string key = "12345";
     mock_time_value = static_cast<std::time_t>(-1);
     mock_errno_value = 0;
-    EXPECT_NO_THROW(hmac::get_totp_code(key));
+    EXPECT_THROW(hmac::get_totp_code(key), std::runtime_error);
     mock_time_value = 0;
     mock_errno_value = 0;
 }
 
-TEST(TotpTimeErrorTest, MinusOneWithErrno) {
+TEST(TotpTimeErrorTest, NegativeTimeThrowsErrno) {
     const std::string key = "12345";
     mock_time_value = static_cast<std::time_t>(-1);
     mock_errno_value = EINVAL;
     EXPECT_THROW(hmac::get_totp_code(key), std::runtime_error);
     mock_errno_value = 0;
     mock_time_value = 0;
+}
+
+TEST(TotpTimeErrorTest, ValidityNegativeTimeThrows) {
+    const std::string key = "12345";
+    mock_time_value = static_cast<std::time_t>(-1);
+    mock_errno_value = 0;
+    EXPECT_THROW(
+        hmac::is_totp_token_valid(0, key.data(), key.size(), 30, 6, hmac::TypeHash::SHA1),
+        std::runtime_error);
+    mock_time_value = 0;
+    mock_errno_value = 0;
 }
 
 int main(int argc, char **argv) {
