@@ -56,6 +56,23 @@ find_package(hmac_cpp CONFIG REQUIRED)
 target_link_libraries(my_app PRIVATE hmac_cpp::hmac_cpp)
 ```
 
+## 🧪 Running Tests
+
+Enable tests during configuration and run them with CTest:
+
+```bash
+cmake -B build -DBUILD_TESTS=ON
+cmake --build build
+cd build
+ctest --output-on-failure
+```
+
+Alternatively, use the helper script:
+
+```bash
+scripts/run_tests.sh
+```
+
 ## 📦 MQL5 Compatibility
 
 The repository includes `sha256.mqh`, `sha512.mqh`, `hmac.mqh`, and `hmac_utils.mqh` files, fully compatible with `MetaTrader 5`.
