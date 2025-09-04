@@ -20,7 +20,26 @@ jobs:
         std: [11, 17]
     steps:
       - uses: actions/checkout@v3
-      - name: Build and Run Tests
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake
+      - name: Configure
+        run: cmake -S . -B build -DBUILD_TESTS=ON -DCMAKE_CXX_STANDARD=${{ matrix.std }}
+      - name: Build
+        run: cmake --build build
+      - name: Run tests
+        run: cd build && ctest --output-on-failure
+  vcpkg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install vcpkg
         run: |
-          sudo apt-get update && sudo apt-get install -y cmake
-          CXX_STANDARD=${{ matrix.std }} ./scripts/run_tests.sh
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+          ./vcpkg/vcpkg install gtest
+      - name: Configure
+        run: cmake -S . -B build -DBUILD_TESTS=ON -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
+      - name: Build
+        run: cmake --build build
+      - name: Run tests
+        run: cd build && ctest --output-on-failure
