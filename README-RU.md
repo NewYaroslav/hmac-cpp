@@ -233,6 +233,7 @@ int main() {
 - [ADVobfuscator](https://github.com/andrivet/ADVobfuscator)
 - [obfy](https://github.com/NewYaroslav/obfy)
 - [aescpp](https://github.com/NewYaroslav/aescpp)
+- [siphash-hpp](https://github.com/NewYaroslav/siphash-hpp)
 
 ## 📝 Лицензия
 
