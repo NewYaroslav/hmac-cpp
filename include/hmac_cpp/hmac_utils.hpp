@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace hmac {
+namespace hmac_cpp {
 
     /// \brief Compares two strings in constant time
     /// \param a First string
@@ -320,6 +320,7 @@ namespace hmac {
         return is_totp_token_valid(token, key.data(), key.size(), period, digits, hash_type);
     }
 
-} // namespace hmac
+} // namespace hmac_cpp
+namespace hmac = hmac_cpp;
 
 #endif // _HMAC_UTILS_HPP_INCLUDED

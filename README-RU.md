@@ -137,7 +137,7 @@ std::vector<uint8_t> get_hmac(
 #### HOTP (HMAC-based One-Time Password)
 
 ```cpp
-#include <hmac_utils.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 std::string key = "12345678901234567890"; // raw key
 uint64_t counter = 0;
@@ -148,7 +148,7 @@ std::cout << "HOTP: " << otp << std::endl;
 #### TOTP (Time-based One-Time Password)
 
 ```
-#include <hmac_utils.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 std::string key = "12345678901234567890"; // raw key
 int otp = get_totp_code(key); // по умолчанию: 30 сек, 6 цифр, SHA1
@@ -175,7 +175,7 @@ int otp = get_totp_code_at(key, time_at);
 Пример использования:
 
 ```cpp
-#include <hmac_utils.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 std::string token = hmac::generate_time_token(secret_key, 60);
 bool is_valid = hmac::is_token_valid(token, secret_key, 60);
@@ -206,7 +206,7 @@ try {
 
 ```cpp
 #include <iostream>
-#include <hmac.hpp>
+#include <hmac_cpp/hmac.hpp>
 
 int main() {
     std::string input = "grape";

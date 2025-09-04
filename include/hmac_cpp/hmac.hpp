@@ -6,7 +6,7 @@
 #include "sha256.hpp"
 #include "sha512.hpp"
 
-namespace hmac {
+namespace hmac_cpp {
 
     /// \brief Type of the hash function used
     enum class TypeHash {
@@ -80,5 +80,6 @@ namespace hmac {
     /// \return HMAC result
     std::string get_hmac(const std::string& key_input, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false);
 }
+namespace hmac = hmac_cpp;
 
 #endif // _HMAC_HPP_INCLUDED

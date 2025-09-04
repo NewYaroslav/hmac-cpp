@@ -5,8 +5,8 @@
 #include <limits>
 #include <cerrno>
 
-#include "hmac.hpp"
-#include "hmac_utils.hpp"
+#include "hmac_cpp/hmac.hpp"
+#include "hmac_cpp/hmac_utils.hpp"
 
 static std::time_t mock_time_value = 0;
 static int mock_errno_value = 0;

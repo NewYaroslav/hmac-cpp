@@ -1,10 +1,10 @@
-#include "hmac_utils.hpp"
+#include "hmac_cpp/hmac_utils.hpp"
 #include <ctime>
 #include <cerrno>
 #include <stdexcept>
 #include <limits>
 
-namespace hmac {
+namespace hmac_cpp {
  
     bool constant_time_equals(const std::string &a, const std::string &b) {
         size_t max_len = a.size() > b.size() ? a.size() : b.size();
@@ -122,7 +122,7 @@ namespace hmac {
         }
 
         // Step 2: Compute HMAC
-        std::vector<uint8_t> hmac_result = hmac::get_hmac(key_ptr, key_len, counter_bytes, 8, hash_type);
+        std::vector<uint8_t> hmac_result = hmac_cpp::get_hmac(key_ptr, key_len, counter_bytes, 8, hash_type);
 
         // Step 3: Dynamic truncation and modulo
         return detail::hotp_from_digest(hmac_result, digits);
@@ -231,4 +231,4 @@ namespace hmac {
         return false;
     }
 
-} // namespace hmac
+} // namespace hmac_cpp

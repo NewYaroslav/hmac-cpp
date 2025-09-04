@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
-#include "hmac.hpp"
-#include "hmac_utils.hpp"
+#include "hmac_cpp/hmac.hpp"
+#include "hmac_cpp/hmac_utils.hpp"
 
 void print_section(const std::string& title) {
     std::cout << "=== " << title << " ===" << std::endl;

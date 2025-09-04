@@ -137,7 +137,7 @@ The library supports generating one-time passwords based on RFC 4226 and RFC 623
 #### HOTP (HMAC-based One-Time Password)
 
 ```cpp
-#include <hmac_utils.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 std::string key = "12345678901234567890"; // raw key
 uint64_t counter = 0;
@@ -148,7 +148,7 @@ std::cout << "HOTP: " << otp << std::endl;
 #### TOTP (Time-based One-Time Password)
 
 ```cpp
-#include <hmac_utils.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 std::string key = "12345678901234567890"; // raw key
 int otp = get_totp_code(key); // defaults: 30s period, 6 digits, SHA1
@@ -175,7 +175,7 @@ The library also includes a **lightweight implementation of time-based HMAC toke
 #### Example:
 
 ```cpp
-#include <hmac_utils.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 std::string token = hmac::generate_time_token(secret_key, 60);
 bool is_valid = hmac::is_token_valid(token, secret_key, 60);
@@ -206,7 +206,7 @@ The example is in `example.cpp` and is built automatically when `BUILD_EXAMPLE=O
 
 ```cpp
 #include <iostream>
-#include <hmac.hpp>
+#include <hmac_cpp/hmac.hpp>
 
 int main() {
     std::string input = "grape";

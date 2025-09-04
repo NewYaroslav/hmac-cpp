@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cstdint>
-#include "hmac.hpp"
+#include "hmac_cpp/hmac.hpp"
 
-namespace hmac {
+namespace hmac_cpp {
 
     std::string to_hex(const std::string& input, bool is_upper) {
         static const char *lut = "0123456789abcdef0123456789ABCDEF";
