@@ -21,7 +21,7 @@
 
 #include <cstdio>
 #include <algorithm>
-#include "sha1.hpp"
+#include "hmac_cpp/sha1.hpp"
 
 /* Help macros */
 #define SHA1_ROL(value, bits) (((value) << (bits)) | (((value) & 0xffffffff) >> (32 - (bits))))

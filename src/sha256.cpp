@@ -43,7 +43,7 @@
 #include <cstring>
 #include <cstdio>
 //#include <fstream>
-#include "sha256.hpp"
+#include "hmac_cpp/sha256.hpp"
 
 #define SHA2_SHFR(x, n)    (x >> n)
 #define SHA2_ROTR(x, n)   ((x >> n) | (x << ((sizeof(x) << 3) - n)))

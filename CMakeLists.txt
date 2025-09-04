@@ -10,28 +10,28 @@ option(BUILD_EXAMPLE "Build the example program" ON)
 option(BUILD_TESTS "Build the test suite" OFF)
 
 set(HMAC_SOURCES
-    sha1.cpp
-	sha256.cpp
-    sha512.cpp
-        hmac.cpp
-        hmac_utils.cpp
+    src/sha1.cpp
+    src/sha256.cpp
+    src/sha512.cpp
+    src/hmac.cpp
+    src/hmac_utils.cpp
 )
 
 set(HMAC_HEADERS
-    hmac.hpp
-    hmac_utils.hpp
-    sha1.hpp
-    sha256.hpp
-    sha512.hpp
+    include/hmac_cpp/hmac.hpp
+    include/hmac_cpp/hmac_utils.hpp
+    include/hmac_cpp/sha1.hpp
+    include/hmac_cpp/sha256.hpp
+    include/hmac_cpp/sha512.hpp
 )
 
 add_library(hmac STATIC ${HMAC_SOURCES})
-target_include_directories(hmac PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(hmac PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if(BUILD_EXAMPLE)
     add_executable(example example.cpp)
     target_link_libraries(example PRIVATE hmac)
-    target_include_directories(example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endif()
 
 install(TARGETS hmac DESTINATION lib)
@@ -47,6 +47,6 @@ if(BUILD_TESTS)
     FetchContent_MakeAvailable(googletest)
     add_executable(test_all test_all.cpp)
     target_link_libraries(test_all PRIVATE hmac gtest_main)
-    target_include_directories(test_all PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(test_all PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     add_test(NAME test_all COMMAND test_all)
 endif()
