@@ -44,8 +44,8 @@ namespace hmac_cpp {
             throw std::invalid_argument("PBKDF2: iterations too large");
         if (dk_len == 0)
             throw std::invalid_argument("PBKDF2: dk_len must be positive");
-        if (salt_len < 16)
-            throw std::invalid_argument("PBKDF2: salt must be at least 16 bytes");
+        if (salt_len == 0)
+            throw std::invalid_argument("PBKDF2: salt must not be empty");
 
         size_t hlen = 0;
         TypeHash hash_type = to_type_hash(prf);
