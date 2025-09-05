@@ -80,9 +80,6 @@ scripts/run_tests.sh
 
 ## Test Vectors
 
-[![Linux](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Linux.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Linux.yml)
-[![Windows](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Win.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Win.yml)
-
 The test suite covers official vectors from [RFC&nbsp;4231](https://www.rfc-editor.org/rfc/rfc4231) and [RFC&nbsp;6070](https://www.rfc-editor.org/rfc/rfc6070) and runs in CI.
 
 ## 📦 MQL5 Compatibility
