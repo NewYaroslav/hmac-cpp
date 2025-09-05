@@ -141,6 +141,13 @@ std::vector<uint8_t> sig =
 secure_zero(key); // optional: wipe after use
 ```
 
+To compare two tokens directly, use `hmac::constant_time_equal` for a
+timing-safe check:
+
+```cpp
+bool same = hmac::constant_time_equal(expected_token, user_token); // lengths are public
+```
+
 ### HMAC (binary data: raw buffer)
 
 ```cpp
@@ -281,21 +288,14 @@ The library also includes a **lightweight implementation of time-based HMAC toke
 #include <hmac_cpp/hmac_utils.hpp>
 
 std::string token = hmac::generate_time_token(secret_key, 60);
-bool is_valid = hmac::is_token_valid(user_token, secret_key, 60);
+bool is_valid = hmac::is_token_valid(token, secret_key, 60);
 ```
 
 You can also bind the token to a *client fingerprint*:
 
 ```cpp
 std::string token = hmac::generate_time_token(secret_key, fingerprint, 60);
-bool is_valid = hmac::is_token_valid(user_token, secret_key, fingerprint, 60);
-```
-
-To compare two tokens directly, use `hmac::constant_time_equal` for a
-timing-safe check:
-
-```cpp
-bool same = hmac::constant_time_equal(expected_token, user_token); // lengths are public
+bool is_valid = hmac::is_token_valid(token, secret_key, fingerprint, 60);
 ```
 
 If `interval_sec` is not positive, the functions throw `std::invalid_argument`:
