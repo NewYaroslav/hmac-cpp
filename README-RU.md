@@ -22,10 +22,13 @@
 
 ## 🔧 Установка и сборка
 
+По умолчанию примеры, тесты и бенчмарки не собираются. Включите их с помощью
+`HMACCPP_BUILD_EXAMPLES`, `HMACCPP_BUILD_TESTS` и `HMACCPP_BUILD_BENCH`.
+
 Для сборки используйте CMake:
 
 ```bash
-cmake -B build -DBUILD_EXAMPLE=ON
+cmake -B build -DHMACCPP_BUILD_EXAMPLES=ON
 cmake --build build
 ```
 
@@ -237,7 +240,7 @@ try {
 
 ## 📄 Пример
 
-Пример находится в `example.cpp`, автоматически собирается при `BUILD_EXAMPLE=ON`.
+Пример находится в `example.cpp` и собирается при `HMACCPP_BUILD_EXAMPLES=ON`.
 
 ```cpp
 #include <iostream>
