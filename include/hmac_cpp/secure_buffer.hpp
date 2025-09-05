@@ -36,9 +36,17 @@ struct secure_buffer {
     static_assert(std::is_trivial<T>::value, "secure_buffer requires trivial type");
 
     secure_buffer() = default;
+
+    /// \brief Construct with n default-initialized elements.
+    /// \param n Element count.
     explicit secure_buffer(size_t n) : buf(n) {}
+
+    /// \brief Construct from vector, moving its contents.
+    /// \param v Source vector.
     explicit secure_buffer(std::vector<T>&& v) : buf(std::move(v)) {}
-    /// \brief Constructs from std::string rvalue and zeroizes the source.
+
+    /// \brief Construct from std::string rvalue and zeroize the source.
+    /// \param s Source string.
     template<class U = T, typename std::enable_if<std::is_same<U, uint8_t>::value, int>::type = 0>
     explicit secure_buffer(std::string&& s) : buf(s.begin(), s.end()) {
         if (!s.empty()) {
@@ -46,6 +54,7 @@ struct secure_buffer {
             s.clear();
         }
     }
+    /// \brief Zeroize contents on destruction.
     ~secure_buffer() { secure_zero(buf.data(), buf.size() * sizeof(T)); }
 
     T* data() { return buf.data(); }
