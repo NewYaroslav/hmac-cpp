@@ -51,8 +51,11 @@ namespace hmac_cpp {
     }
 
     /// \brief Streaming HMAC computation context.
+    /// \thread_safety Not thread-safe.
     class HmacContext {
     public:
+        /// \brief Construct context for selected hash.
+        /// \param type Hash function type.
         explicit HmacContext(TypeHash type) : type_(type), block_size_(0), digest_size_(0) {}
 
         /// \brief Initializes the context with a secret key.
@@ -113,11 +116,24 @@ namespace hmac_cpp {
     /// \return HMAC result
     std::string get_hmac(const std::vector<uint8_t>& key, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false);
 
-    /// \brief Computes HMAC from secure_buffer key
+    /// \brief Compute HMAC using secure_buffer key.
+    /// \param key Secret key bytes.
+    /// \param msg Message to authenticate.
+    /// \param type Hash function type.
+    /// \param is_hex Return result in hex format.
+    /// \param is_upper Use uppercase hex.
+    /// \return HMAC result.
     inline std::string get_hmac(const secure_buffer<uint8_t>& key, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false) {
         return get_hmac(std::vector<uint8_t>(key.begin(), key.end()), msg, type, is_hex, is_upper);
     }
 
+    /// \brief Compute HMAC using string key.
+    /// \param key_input Secret key as string.
+    /// \param msg Message to authenticate.
+    /// \param type Hash function type.
+    /// \param is_hex Return result in hex format.
+    /// \param is_upper Use uppercase hex.
+    /// \return HMAC result.
     /// \deprecated Prefer overloads that accept std::vector<uint8_t> or secure_buffer.
     HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
     inline std::string get_hmac(const std::string& key_input, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false) {

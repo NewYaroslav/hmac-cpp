@@ -24,28 +24,49 @@ namespace hmac_cpp {
     bool constant_time_equals(const uint8_t* a, size_t a_len,
                               const uint8_t* b, size_t b_len);
 
+    /// \brief Compare vectors in constant time.
+    /// \param a First vector.
+    /// \param b Second vector.
+    /// \return true if both vectors are equal.
     inline bool constant_time_equals(const std::vector<uint8_t>& a,
                                      const std::vector<uint8_t>& b) {
         return constant_time_equals(a.data(), a.size(), b.data(), b.size());
     }
 
+    /// \brief Compare strings in constant time.
+    /// \param a First string.
+    /// \param b Second string.
+    /// \return true if both strings are equal.
     inline bool constant_time_equals(const std::string &a, const std::string &b) {
         return constant_time_equals(reinterpret_cast<const uint8_t*>(a.data()), a.size(),
                                     reinterpret_cast<const uint8_t*>(b.data()), b.size());
     }
 
     /// \brief Alias for constant_time_equals.
-    ///        Avoids early length checks to mitigate timing attacks.
+    /// \param a Pointer to first array.
+    /// \param a_len Length of the first array.
+    /// \param b Pointer to second array.
+    /// \param b_len Length of the second array.
+    /// \return true if both arrays are equal.
+    /// \note Avoids early length checks to mitigate timing attacks.
     inline bool constant_time_equal(const uint8_t* a, size_t a_len,
                                     const uint8_t* b, size_t b_len) {
         return constant_time_equals(a, a_len, b, b_len);
     }
 
+    /// \brief Alias for constant_time_equals on vectors.
+    /// \param a First vector.
+    /// \param b Second vector.
+    /// \return true if both vectors are equal.
     inline bool constant_time_equal(const std::vector<uint8_t>& a,
                                     const std::vector<uint8_t>& b) {
         return constant_time_equal(a.data(), a.size(), b.data(), b.size());
     }
 
+    /// \brief Alias for constant_time_equals on strings.
+    /// \param a First string.
+    /// \param b Second string.
+    /// \return true if both strings are equal.
     inline bool constant_time_equal(const std::string& a, const std::string& b) {
         return constant_time_equal(reinterpret_cast<const uint8_t*>(a.data()), a.size(),
                                    reinterpret_cast<const uint8_t*>(b.data()), b.size());
@@ -61,8 +82,8 @@ namespace hmac_cpp {
     /// - Salts and iteration counts must be unique per password.
     /// - Example serialization: {magic|ver|prf|salt|iters|dkLen|…}.
 
-    /// \brief
-  struct Pbkdf2Result {
+    /// \brief Result of PBKDF2 derivation.
+    struct Pbkdf2Result {
         std::vector<uint8_t> salt;
         uint32_t iters;
         std::vector<uint8_t> key;
@@ -83,7 +104,14 @@ namespace hmac_cpp {
             uint32_t iterations, size_t dk_len,
             Pbkdf2Hash prf = Pbkdf2Hash::Sha256);
 
-    /// \brief Derives a key using PBKDF2 from vector-based password and salt
+    /// \brief Derive key using PBKDF2 from vector-based password and salt.
+    /// \tparam T Byte type; must be char or uint8_t.
+    /// \param password Password bytes.
+    /// \param salt Salt bytes.
+    /// \param iterations Number of iterations.
+    /// \param dk_len Desired key length in bytes.
+    /// \param prf Hash function to use.
+    /// \return Derived key as byte vector.
     template<typename T>
     inline std::vector<uint8_t> pbkdf2(
             const std::vector<T>& password,
@@ -97,7 +125,13 @@ namespace hmac_cpp {
                       iterations, dk_len, prf);
     }
 
-    /// \brief Derives a key using PBKDF2 from string-based password and salt
+    /// \brief Derive key using PBKDF2 from string-based password and salt.
+    /// \param password Password bytes as string.
+    /// \param salt Salt bytes as string.
+    /// \param iterations Number of iterations.
+    /// \param dk_len Desired key length in bytes.
+    /// \param prf Hash function to use.
+    /// \return Derived key as byte vector.
     /// \deprecated Use overloads that accept std::vector<uint8_t> or secure_buffer.
     HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
     inline std::vector<uint8_t> pbkdf2(
@@ -110,6 +144,13 @@ namespace hmac_cpp {
                       iterations, dk_len, prf);
     }
 
+    /// \brief Derive key using PBKDF2 from secure_buffer inputs.
+    /// \param password Password bytes.
+    /// \param salt Salt bytes.
+    /// \param iterations Number of iterations.
+    /// \param dk_len Desired key length in bytes.
+    /// \param prf Hash function to use.
+    /// \return Derived key as byte vector.
     inline std::vector<uint8_t> pbkdf2(
             const secure_buffer<uint8_t>& password,
             const secure_buffer<uint8_t>& salt,
@@ -120,6 +161,12 @@ namespace hmac_cpp {
                       iterations, dk_len, prf);
     }
 
+    /// \brief Derive key using stored PBKDF2 parameters and vector password.
+    /// \tparam T Byte type; must be char or uint8_t.
+    /// \param password Password bytes.
+    /// \param params Salt, iteration count and key size.
+    /// \param prf Hash function to use.
+    /// \return Result structure containing salt, iterations and key.
     template<typename T>
     inline Pbkdf2Result pbkdf2(
             const std::vector<T>& password,
@@ -133,6 +180,11 @@ namespace hmac_cpp {
         return {params.salt, params.iters, std::move(key)};
     }
 
+    /// \brief Derive key using stored PBKDF2 parameters and string password.
+    /// \param password Password bytes as string.
+    /// \param params Salt, iteration count and key size.
+    /// \param prf Hash function to use.
+    /// \return Result structure containing salt, iterations and key.
     inline Pbkdf2Result pbkdf2(
             const std::string& password,
             const Pbkdf2Result& params,
@@ -143,6 +195,11 @@ namespace hmac_cpp {
         return {params.salt, params.iters, std::move(key)};
     }
 
+    /// \brief Derive key using stored PBKDF2 parameters and secure_buffer password.
+    /// \param password Password bytes.
+    /// \param params Salt, iteration count and key size.
+    /// \param prf Hash function to use.
+    /// \return Result structure containing salt, iterations and key.
     inline Pbkdf2Result pbkdf2(
             const secure_buffer<uint8_t>& password,
             const Pbkdf2Result& params,
@@ -168,6 +225,14 @@ namespace hmac_cpp {
                 const void* salt_ptr, size_t salt_len,
                 uint32_t iterations, uint8_t* out_ptr, size_t dk_len) noexcept;
 
+    /// \brief Derive PBKDF2 into array using string inputs.
+    /// \tparam N Output array size.
+    /// \param prf Hash function to use.
+    /// \param password Password bytes as string.
+    /// \param salt Salt bytes as string.
+    /// \param iterations Number of iterations.
+    /// \param out Output array for derived key.
+    /// \return true on success, false on invalid parameters.
     /// \deprecated Use overloads that accept std::vector<uint8_t> or secure_buffer.
     template<size_t N>
     HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
@@ -181,6 +246,14 @@ namespace hmac_cpp {
                       iterations, out.data(), out.size());
     }
 
+    /// \brief Derive PBKDF2 into caller buffer using secure_buffer inputs.
+    /// \param prf Hash function to use.
+    /// \param password Password bytes.
+    /// \param salt Salt bytes.
+    /// \param iterations Number of iterations.
+    /// \param out_ptr Output buffer for derived key.
+    /// \param dk_len Length of output buffer in bytes.
+    /// \return true on success, false on invalid parameters.
     inline bool pbkdf2(Pbkdf2Hash prf,
                        const secure_buffer<uint8_t>& password,
                        const secure_buffer<uint8_t>& salt,
@@ -191,6 +264,14 @@ namespace hmac_cpp {
                       iterations, out_ptr, dk_len);
     }
 
+    /// \brief Derive PBKDF2 into array using secure_buffer inputs.
+    /// \tparam N Output array size.
+    /// \param prf Hash function to use.
+    /// \param password Password bytes.
+    /// \param salt Salt bytes.
+    /// \param iterations Number of iterations.
+    /// \param out Output array for derived key.
+    /// \return true on success, false on invalid parameters.
     template<size_t N>
     inline bool pbkdf2(Pbkdf2Hash prf,
                        const secure_buffer<uint8_t>& password,
@@ -215,6 +296,13 @@ namespace hmac_cpp {
                             const void* salt_ptr, size_t salt_len,
                             uint32_t iterations, uint8_t* out_ptr, size_t dk_len) noexcept;
 
+    /// \brief Derive PBKDF2-HMAC-SHA256 into array using string inputs.
+    /// \tparam N Output array size.
+    /// \param password Password bytes as string.
+    /// \param salt Salt bytes as string.
+    /// \param iterations Number of iterations.
+    /// \param out Output array for derived key.
+    /// \return true on success, false on invalid parameters.
     /// \deprecated Use overloads that accept std::vector<uint8_t> or secure_buffer.
     template<size_t N>
     HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
@@ -302,7 +390,14 @@ namespace hmac_cpp {
                                   iterations, dk_len, prf);
     }
 
-    /// \brief Derives a key using PBKDF2 with pepper from string inputs
+    /// \brief Derive key using PBKDF2 with pepper from string inputs.
+    /// \param password Password bytes as string.
+    /// \param salt Salt bytes as string.
+    /// \param pepper Pepper bytes as string.
+    /// \param iterations Number of iterations.
+    /// \param dk_len Desired length of derived key in bytes.
+    /// \param prf Hash function to use.
+    /// \return Derived key as byte vector.
     /// \deprecated Use overloads that accept std::vector<uint8_t> or secure_buffer.
     HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
     inline std::vector<uint8_t> pbkdf2_with_pepper(
@@ -347,6 +442,10 @@ namespace hmac_cpp {
             const void* ikm_ptr, size_t ikm_len,
             const void* salt_ptr, size_t salt_len);
 
+    /// \brief HKDF extract step using vector inputs.
+    /// \param ikm Input keying material.
+    /// \param salt Salt bytes.
+    /// \return Pseudorandom key.
     inline std::vector<uint8_t> hkdf_extract_sha256(
             const std::vector<uint8_t>& ikm,
             const std::vector<uint8_t>& salt) {
@@ -365,6 +464,11 @@ namespace hmac_cpp {
             const void* info_ptr, size_t info_len,
             size_t L);
 
+    /// \brief HKDF expand step using vector inputs.
+    /// \param prk Pseudorandom key.
+    /// \param info Context information.
+    /// \param L Output key length in bytes.
+    /// \return Output keying material.
     inline std::vector<uint8_t> hkdf_expand_sha256(
             const std::vector<uint8_t>& prk,
             const std::vector<uint8_t>& info,
@@ -389,6 +493,11 @@ namespace hmac_cpp {
                           const void* salt_ptr, size_t salt_len,
                           const std::string& context);
 
+    /// \brief Derive key and IV using vector inputs.
+    /// \param ikm Input keying material.
+    /// \param salt Salt bytes.
+    /// \param context Application-specific context string.
+    /// \return Derived key and IV.
     inline KeyIv hkdf_key_iv_256(const std::vector<uint8_t>& ikm,
                                  const std::vector<uint8_t>& salt,
                                  const std::string& context) {
@@ -402,9 +511,21 @@ namespace hmac_cpp {
     /// \return Hex-encoded HMAC-SHA256 of the rounded time value
     /// \throws std::runtime_error if the system time cannot be retrieved
     std::string generate_time_token(const std::vector<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
+
+    /// \brief Generate time token using secure buffer key.
+    /// \param key Secret key bytes.
+    /// \param interval_sec Token rotation interval in seconds.
+    /// \param hash_type Hash function to use.
+    /// \return Hex-encoded token.
     inline std::string generate_time_token(const secure_buffer<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
         return generate_time_token(std::vector<uint8_t>(key.begin(), key.end()), interval_sec, hash_type);
     }
+
+    /// \brief Generate time token using string key.
+    /// \param key Secret key as string.
+    /// \param interval_sec Token rotation interval in seconds.
+    /// \param hash_type Hash function to use.
+    /// \return Hex-encoded token.
     /// \deprecated Prefer overloads that accept std::vector<uint8_t> or secure_buffer.
     HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
     inline std::string generate_time_token(const std::string &key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
@@ -419,9 +540,23 @@ namespace hmac_cpp {
     /// \return true if the token is valid within the ±1 interval range; false otherwise
     /// \throws std::runtime_error if the system time cannot be retrieved
     bool is_token_valid(const std::string &token, const std::vector<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
+
+    /// \brief Validate time token using secure buffer key.
+    /// \param token Token to validate.
+    /// \param key Secret key bytes.
+    /// \param interval_sec Token rotation interval in seconds.
+    /// \param hash_type Hash function to use.
+    /// \return true if token is valid.
     inline bool is_token_valid(const std::string &token, const secure_buffer<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
         return is_token_valid(token, std::vector<uint8_t>(key.begin(), key.end()), interval_sec, hash_type);
     }
+
+    /// \brief Validate time token using string key.
+    /// \param token Token to validate.
+    /// \param key Secret key as string.
+    /// \param interval_sec Token rotation interval in seconds.
+    /// \param hash_type Hash function to use.
+    /// \return true if token is valid.
     /// \deprecated Prefer overloads that accept std::vector<uint8_t> or secure_buffer.
     HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
     inline bool is_token_valid(const std::string &token, const std::string &key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
@@ -436,9 +571,23 @@ namespace hmac_cpp {
     /// \return Hex-encoded HMAC-SHA256 of the concatenated timestamp and fingerprint
     /// \throws std::runtime_error if the system time cannot be retrieved
     std::string generate_time_token(const std::vector<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
+
+    /// \brief Generate fingerprint-bound token using secure buffer key.
+    /// \param key Secret key bytes.
+    /// \param fingerprint Client identifier.
+    /// \param interval_sec Token rotation interval in seconds.
+    /// \param hash_type Hash function to use.
+    /// \return Hex-encoded token.
     inline std::string generate_time_token(const secure_buffer<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
         return generate_time_token(std::vector<uint8_t>(key.begin(), key.end()), fingerprint, interval_sec, hash_type);
     }
+
+    /// \brief Generate fingerprint-bound token using string key.
+    /// \param key Secret key as string.
+    /// \param fingerprint Client identifier.
+    /// \param interval_sec Token rotation interval in seconds.
+    /// \param hash_type Hash function to use.
+    /// \return Hex-encoded token.
     /// \deprecated Prefer overloads that accept std::vector<uint8_t> or secure_buffer.
     HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
     inline std::string generate_time_token(const std::string &key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
@@ -454,9 +603,25 @@ namespace hmac_cpp {
     /// \return true if the token is valid within the ±1 interval range; false otherwise
     /// \throws std::runtime_error if the system time cannot be retrieved
     bool is_token_valid(const std::string &token, const std::vector<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
+
+    /// \brief Validate fingerprint-bound token using secure buffer key.
+    /// \param token Token to validate.
+    /// \param key Secret key bytes.
+    /// \param fingerprint Client identifier.
+    /// \param interval_sec Token rotation interval in seconds.
+    /// \param hash_type Hash function to use.
+    /// \return true if token is valid.
     inline bool is_token_valid(const std::string &token, const secure_buffer<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
         return is_token_valid(token, std::vector<uint8_t>(key.begin(), key.end()), fingerprint, interval_sec, hash_type);
     }
+
+    /// \brief Validate fingerprint-bound token using string key.
+    /// \param token Token to validate.
+    /// \param key Secret key as string.
+    /// \param fingerprint Client identifier.
+    /// \param interval_sec Token rotation interval in seconds.
+    /// \param hash_type Hash function to use.
+    /// \return true if token is valid.
     /// \deprecated Prefer overloads that accept std::vector<uint8_t> or secure_buffer.
     HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
     inline bool is_token_valid(const std::string &token, const std::string &key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
@@ -486,6 +651,12 @@ namespace hmac_cpp {
         return get_hotp_code(key.data(), key.size(), counter, digits, hash_type);
     }
 
+    /// \brief Compute HOTP code using secure buffer key.
+    /// \param key Secret key bytes.
+    /// \param counter Moving counter.
+    /// \param digits Number of digits in OTP.
+    /// \param hash_type Hash function to use.
+    /// \return One-Time Password.
     inline int get_hotp_code(const secure_buffer<uint8_t>& key, uint64_t counter, int digits = 6, TypeHash hash_type = TypeHash::SHA1) {
         return get_hotp_code(key.data(), key.size(), counter, digits, hash_type);
     }
@@ -550,6 +721,13 @@ namespace hmac_cpp {
         return get_totp_code_at(key.data(), key.size(), timestamp, period, digits, hash_type);
     }
 
+    /// \brief Compute TOTP code for timestamp using secure buffer key.
+    /// \param key Secret key bytes.
+    /// \param timestamp UNIX timestamp in seconds.
+    /// \param period Time step in seconds.
+    /// \param digits Number of digits in OTP.
+    /// \param hash_type Hash function to use.
+    /// \return TOTP code.
     inline int get_totp_code_at(
             const secure_buffer<uint8_t>& key,
             uint64_t timestamp,
@@ -608,6 +786,12 @@ namespace hmac_cpp {
         return get_totp_code(key.data(), key.size(), period, digits, hash_type);
     }
 
+    /// \brief Compute current TOTP code using secure buffer key.
+    /// \param key Secret key bytes.
+    /// \param period Time step in seconds.
+    /// \param digits Number of digits in OTP.
+    /// \param hash_type Hash function to use.
+    /// \return TOTP code.
     inline int get_totp_code(const secure_buffer<uint8_t>& key, int period = 30, int digits = 6, TypeHash hash_type = TypeHash::SHA1) {
         return get_totp_code(key.data(), key.size(), period, digits, hash_type);
     }
