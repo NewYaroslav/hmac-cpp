@@ -54,6 +54,13 @@ namespace hmac_cpp {
     /// \brief Hash choices for PBKDF2
     enum class Pbkdf2Hash { Sha1, Sha256, Sha512 };
 
+    /// PBKDF2 Security Notes:
+    /// - Use a random salt of at least 16 bytes and never reuse it.
+    /// - Choose iterations so the derivation takes about 200–500 ms on 2025 hardware.
+    /// - Store {salt, iterations} with the ciphertext or hash; these values are public.
+    /// - Salts and iteration counts must be unique per password.
+    /// - Example serialization: {magic|ver|prf|salt|iters|dkLen|…}.
+
     /// \brief Derives a key from a password using PBKDF2 (RFC 8018)
     /// \param password_ptr Pointer to the password buffer
     /// \param password_len Length of the password in bytes

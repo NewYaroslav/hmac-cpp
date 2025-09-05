@@ -205,6 +205,14 @@ Parameters:
 For deployments with a server-side *pepper*, use `pbkdf2_with_pepper(password, salt, pepper, iters, dkLen)`.
 The pepper is a secret key stored separately from the hashed password.
 
+### PBKDF2 Security Notes
+
+- Use a random salt of **at least 16 bytes** and never reuse it.
+- Choose an iteration count that takes roughly **200–500 ms** on your target hardware (~2025).
+- Store `{salt, iterations}` alongside the ciphertext or hash; these values are public.
+- Salts and iteration counts must be unique per password.
+- Example serialization: `{magic|ver|prf|salt|iters|dkLen|…}`.
+
 #### PBKDF2-HMAC-SHA256 + AES-GCM
 
 ```cpp
