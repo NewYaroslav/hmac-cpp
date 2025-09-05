@@ -70,6 +70,29 @@ namespace hmac_cpp {
                       iterations, dk_len, prf);
     }
 
+    /// \brief Derives PBKDF2-HMAC-SHA256 into caller-provided buffer
+    /// \param password_ptr Pointer to the password buffer
+    /// \param password_len Length of the password in bytes
+    /// \param salt_ptr Pointer to the salt buffer
+    /// \param salt_len Length of the salt in bytes
+    /// \param iterations Number of iterations, must be positive
+    /// \param out_ptr Output buffer for derived key
+    /// \param dk_len Length of output buffer in bytes, must be positive
+    /// \return true on success, false on invalid parameters
+    bool pbkdf2_hmac_sha256(const void* password_ptr, size_t password_len,
+                            const void* salt_ptr, size_t salt_len,
+                            uint32_t iterations, uint8_t* out_ptr, size_t dk_len) noexcept;
+
+    template<size_t N>
+    inline bool pbkdf2_hmac_sha256(const std::string& password,
+                                   const std::string& salt,
+                                   uint32_t iterations,
+                                   std::array<uint8_t, N>& out) noexcept {
+        return pbkdf2_hmac_sha256(password.data(), password.size(),
+                                  salt.data(), salt.size(),
+                                  iterations, out.data(), out.size());
+    }
+
     std::vector<uint8_t> pbkdf2_with_pepper(
             const void* password_ptr, size_t password_len,
             const void* salt_ptr, size_t salt_len,

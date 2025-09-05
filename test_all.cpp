@@ -5,6 +5,8 @@
 #include <limits>
 #include <cerrno>
 #include <random>
+#include <array>
+#include <algorithm>
 #include <openssl/evp.h>
 
 #include "hmac_cpp/hmac.hpp"
@@ -224,6 +226,17 @@ TEST(PBKDF2Validation, ShortSaltThrows) {
     EXPECT_THROW(hmac::pbkdf2("password", "salt", 2, 20, hmac::Pbkdf2Hash::Sha1), std::invalid_argument);
 }
 
+TEST(PBKDF2Validation, ZeroIterationsThrows) {
+    std::string salt(16, 'a');
+    EXPECT_THROW(hmac::pbkdf2("password", salt, 0, 32, hmac::Pbkdf2Hash::Sha256), std::invalid_argument);
+}
+
+TEST(PBKDF2Validation, TooLargeDkLenThrows) {
+    std::string salt(16, 'a');
+    size_t too_large = (static_cast<uint64_t>(1) << 32) * 20;
+    EXPECT_THROW(hmac::pbkdf2("password", salt, 1, too_large, hmac::Pbkdf2Hash::Sha1), std::invalid_argument);
+}
+
 TEST(PBKDF2Test, SHA256WithValidSalt) {
     auto salt = from_hex("000102030405060708090a0b0c0d0e0f");
     std::string salt_str(salt.begin(), salt.end());
@@ -231,6 +244,16 @@ TEST(PBKDF2Test, SHA256WithValidSalt) {
     std::vector<uint8_t> ref(32);
     ASSERT_TRUE(PKCS5_PBKDF2_HMAC("password", 8, salt.data(), salt.size(), 2, EVP_sha256(), ref.size(), ref.data()));
     EXPECT_TRUE(hmac::constant_time_equals(dk, ref));
+}
+
+TEST(PBKDF2BufferApiTest, SHA256ArrayOutput) {
+    auto salt = from_hex("000102030405060708090a0b0c0d0e0f");
+    std::string salt_str(salt.begin(), salt.end());
+    std::array<uint8_t,32> out{};
+    ASSERT_TRUE(hmac::pbkdf2_hmac_sha256(std::string("password"), salt_str, 2, out));
+    std::vector<uint8_t> ref(32);
+    ASSERT_TRUE(PKCS5_PBKDF2_HMAC("password", 8, salt.data(), salt.size(), 2, EVP_sha256(), ref.size(), ref.data()));
+    EXPECT_TRUE(std::equal(out.begin(), out.end(), ref.begin()));
 }
 
 // SHA512 vector from BoringSSL pbkdf_test.cc
