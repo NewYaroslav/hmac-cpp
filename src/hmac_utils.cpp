@@ -42,8 +42,8 @@ namespace hmac_cpp {
             throw std::invalid_argument("PBKDF2: iterations must be >= 1");
         if (dk_len == 0)
             throw std::invalid_argument("PBKDF2: dk_len must be positive");
-        if (salt_len < 16)
-            throw std::invalid_argument("PBKDF2: salt must be at least 16 bytes");
+        if (salt_len == 0)
+            throw std::invalid_argument("PBKDF2: salt must not be empty");
 
         size_t hlen = 0;
         TypeHash hash_type = to_type_hash(prf);
@@ -115,7 +115,7 @@ namespace hmac_cpp {
             (salt_len > 0 && salt_ptr == nullptr) ||
             out_ptr == nullptr)
             return false;
-        if (iterations < 1 || dk_len == 0 || salt_len < 16)
+        if (iterations < 1 || dk_len == 0 || salt_len == 0)
             return false;
 
         const size_t hlen = hmac_hash::SHA256::DIGEST_SIZE;
