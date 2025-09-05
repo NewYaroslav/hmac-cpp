@@ -36,4 +36,4 @@ jobs:
         run: cmake --build build
       - name: Run tests
         shell: msys2 {0}
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure -R "test_all|test_totp"

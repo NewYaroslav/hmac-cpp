@@ -85,3 +85,46 @@ TEST(TotpBoundaryTest, MaxTimestampValidatesMaxCounter) {
     int token = hmac::get_hotp_code(key.data(), key.size(), max_counter, digits, hmac::TypeHash::SHA1);
     EXPECT_TRUE(hmac::is_totp_token_valid(token, key.data(), key.size(), max_timestamp, 1, digits, hmac::TypeHash::SHA1));
 }
+
+TEST(HotpTest, RFC4226Vectors) {
+    std::string key = "12345678901234567890";
+    int expected[10] = {755224, 287082, 359152, 969429, 338314,
+                        254676, 287922, 162583, 399871, 520489};
+    for (uint64_t counter = 0; counter < 10; ++counter) {
+        EXPECT_EQ(hmac::get_hotp_code(key.data(), key.size(), counter,
+                                      6, hmac::TypeHash::SHA1),
+                  expected[counter])
+            << "Counter " << counter;
+    }
+}
+
+TEST(TotpTest, RFC6238Vectors) {
+    struct Vector {
+        uint64_t time;
+        int sha1;
+        int sha256;
+        int sha512;
+    };
+    std::vector<Vector> vectors = {
+        {59, 94287082, 46119246, 90693936},
+        {1111111109, 7081804, 68084774, 25091201},
+        {1111111111, 14050471, 67062674, 99943326},
+        {1234567890, 89005924, 91819424, 93441116},
+        {2000000000, 69279037, 90698825, 38618901},
+        {20000000000ULL, 65353130, 77737706, 47863826},
+    };
+
+    std::string key_sha1 = "12345678901234567890";
+    std::string key_sha256 = "12345678901234567890123456789012";
+    std::string key_sha512 =
+        "1234567890123456789012345678901234567890123456789012345678901234";
+
+    for (const auto& v : vectors) {
+        EXPECT_EQ(hmac::get_totp_code_at(key_sha1, v.time, 30, 8, hmac::TypeHash::SHA1),
+                  v.sha1);
+        EXPECT_EQ(hmac::get_totp_code_at(key_sha256, v.time, 30, 8, hmac::TypeHash::SHA256),
+                  v.sha256);
+        EXPECT_EQ(hmac::get_totp_code_at(key_sha512, v.time, 30, 8, hmac::TypeHash::SHA512),
+                  v.sha512);
+    }
+}

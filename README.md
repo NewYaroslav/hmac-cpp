@@ -360,6 +360,18 @@ int main() {
 longer for longer inputs. Avoid checking lengths separately—early length
 comparisons can leak information through timing side channels.
 
+Build the example manually after installation:
+
+```bash
+g++ example.cpp -std=c++11 -Iinclude -Llib -lhmac_cpp
+```
+
+Using MSVC:
+
+```bat
+cl /EHsc example.cpp /I include /link libhmac_cpp.lib
+```
+
 ## 📚 Resources
 
 * Original [SHA256 implementation](http://www.zedwood.com/article/cpp-sha256-function)

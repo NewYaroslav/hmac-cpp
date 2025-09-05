@@ -153,6 +153,42 @@ TEST(HMACTest, InvalidTypeThrowsString) {
     EXPECT_THROW(hmac::get_hmac(key, msg, invalid), std::invalid_argument);
 }
 
+TEST(HMACTest, RFC2202SHA1Vectors) {
+    struct Vector {
+        std::string key;
+        std::string data;
+        std::string sha1;
+    };
+    std::vector<Vector> vectors;
+    vectors.push_back({std::string(20, '\x0b'), "Hi There",
+                       "b617318655057264e28bc0b6fb378c8ef146be00"});
+    vectors.push_back({"Jefe", "what do ya want for nothing?",
+                       "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79"});
+    vectors.push_back({std::string(20, '\xaa'), std::string(50, '\xdd'),
+                       "125d7342b9ac11cd91a39af48aa17b4f63f175d3"});
+    {
+        std::string key;
+        for (int i = 1; i <= 25; ++i) key.push_back(static_cast<char>(i));
+        vectors.push_back({key, std::string(50, '\xcd'),
+                           "4c9007f4026250c6bc8414f9bf50c86c2d7235da"});
+    }
+    vectors.push_back({std::string(20, '\x0c'), "Test With Truncation",
+                       "4c1a03424b55e07fe7f27be1d58bb9324a9a5a04"});
+    vectors.push_back({std::string(80, '\xaa'),
+                       "Test Using Larger Than Block-Size Key - Hash Key First",
+                       "aa4ae5e15272d00e95705637ce8a3b55ed402112"});
+    vectors.push_back({std::string(80, '\xaa'),
+                       "Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data",
+                       "e8e99d0f45237d786d6bbaa7965c7808bbff1a91"});
+
+    for (size_t i = 0; i < vectors.size(); ++i) {
+        EXPECT_EQ(hmac::get_hmac(vectors[i].key, vectors[i].data,
+                                 hmac::TypeHash::SHA1, true),
+                  vectors[i].sha1)
+            << "Case " << i + 1 << " SHA1 mismatch";
+    }
+}
+
 TEST(HMACTest, RFC4231Vectors) {
     struct Vector {
         std::string key_hex;
@@ -188,8 +224,8 @@ TEST(HMACTest, RFC4231Vectors) {
           "b0ba465637458c6990e5a8c5f61d4af7e576d97ff94b872de76f8050361ee3dba91ca5c11aa25eb4d679275cc5788063a5f19741120c4f2de2adebeb10a298dd",
           0 },
         { repeat("0c", 20), "546573742057697468205472756e636174696f6e",
-          "a3b6167473100ee06e0c796c2955552b",
-          "415fad6271580a531d4179bc891d87a6",
+          "a3b6167473100ee06e0c796c2955552bfa6f7c0a6a8aef8b93f860aab0cd20c5",
+          "415fad6271580a531d4179bc891d87a650188707922a4fbb36663a1eb16da008711c5b50ddd0fc235084eb9d3364a1454fb2ef67cd1d29fe6773068ea266e96b",
           16 },
         { repeat("aa", 131), "54657374205573696e67204c6172676572205468616e20426c6f636b2d53697a65204b6579202d2048617368204b6579204669727374",
           "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54",
@@ -209,12 +245,16 @@ TEST(HMACTest, RFC4231Vectors) {
         auto h512 = hmac::get_hmac(key, data, hmac::TypeHash::SHA512);
         std::string h256_hex = hmac::to_hex(std::string(h256.begin(), h256.end()));
         std::string h512_hex = hmac::to_hex(std::string(h512.begin(), h512.end()));
-        if (vectors[i].truncate_to) {
-            h256_hex = h256_hex.substr(0, vectors[i].truncate_to * 2);
-            h512_hex = h512_hex.substr(0, vectors[i].truncate_to * 2);
-        }
         EXPECT_EQ(h256_hex, vectors[i].sha256) << "Case " << i + 1 << " SHA-256 mismatch";
         EXPECT_EQ(h512_hex, vectors[i].sha512) << "Case " << i + 1 << " SHA-512 mismatch";
+        if (vectors[i].truncate_to) {
+            EXPECT_EQ(h256_hex.substr(0, vectors[i].truncate_to * 2),
+                      vectors[i].sha256.substr(0, vectors[i].truncate_to * 2))
+                << "Case " << i + 1 << " SHA-256 trunc mismatch";
+            EXPECT_EQ(h512_hex.substr(0, vectors[i].truncate_to * 2),
+                      vectors[i].sha512.substr(0, vectors[i].truncate_to * 2))
+                << "Case " << i + 1 << " SHA-512 trunc mismatch";
+        }
     }
 }
 
