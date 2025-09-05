@@ -1,36 +1,51 @@
 #include "hmac_cpp/hmac_utils.hpp"
+#include "hmac_cpp/secure_buffer.hpp"
 #include <ctime>
 #include <cerrno>
 #include <stdexcept>
 #include <limits>
+#include <algorithm>
 
 namespace hmac_cpp {
  
-    bool constant_time_equals(const std::string &a, const std::string &b) {
-        size_t max_len = a.size() > b.size() ? a.size() : b.size();
-        unsigned int diff = (a.size() != b.size());
+    bool constant_time_equals(const uint8_t* a, size_t a_len,
+                              const uint8_t* b, size_t b_len) {
+        size_t max_len = a_len > b_len ? a_len : b_len;
+        unsigned int diff = (a_len != b_len);
         for (size_t i = 0; i < max_len; ++i) {
-            unsigned char ac = i < a.size() ? static_cast<unsigned char>(a[i]) : 0;
-            unsigned char bc = i < b.size() ? static_cast<unsigned char>(b[i]) : 0;
+            unsigned char ac = i < a_len ? a[i] : 0;
+            unsigned char bc = i < b_len ? b[i] : 0;
             diff |= ac ^ bc;
         }
         return diff == 0;
     }
 
+    static TypeHash to_type_hash(Pbkdf2Hash prf) {
+        switch (prf) {
+            case Pbkdf2Hash::Sha1: return TypeHash::SHA1;
+            case Pbkdf2Hash::Sha256: return TypeHash::SHA256;
+            case Pbkdf2Hash::Sha512: return TypeHash::SHA512;
+        }
+        throw std::invalid_argument("Unsupported hash type");
+    }
+
     std::vector<uint8_t> pbkdf2(
             const void* password_ptr, size_t password_len,
             const void* salt_ptr, size_t salt_len,
-            int iterations, size_t dk_len,
-            TypeHash hash_type) {
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf) {
         if ((password_len > 0 && password_ptr == nullptr) ||
             (salt_len > 0 && salt_ptr == nullptr))
             throw std::invalid_argument("Null pointer with non-zero length");
-        if (iterations <= 0)
-            throw std::invalid_argument("PBKDF2: iterations must be positive");
+        if (iterations < 1)
+            throw std::invalid_argument("PBKDF2: iterations must be >= 1");
         if (dk_len == 0)
             throw std::invalid_argument("PBKDF2: dk_len must be positive");
+        if (salt_len < 16)
+            throw std::invalid_argument("PBKDF2: salt must be at least 16 bytes");
 
         size_t hlen = 0;
+        TypeHash hash_type = to_type_hash(prf);
         switch (hash_type) {
             case TypeHash::SHA1:
                 hlen = hmac_hash::SHA1::DIGEST_SIZE;
@@ -44,6 +59,11 @@ namespace hmac_cpp {
             default:
                 throw std::invalid_argument("Unsupported hash type");
         }
+
+        uint64_t max_dk = (static_cast<uint64_t>(1) << 32) - 1;
+        max_dk *= hlen;
+        if (dk_len > max_dk)
+            throw std::invalid_argument("PBKDF2: dk_len too large");
 
         size_t l = (dk_len + hlen - 1) / hlen;
         size_t r = dk_len - (l - 1) * hlen;
@@ -68,7 +88,7 @@ namespace hmac_cpp {
                                               salt_block.data(), salt_block.size(),
                                               hash_type);
             std::vector<uint8_t> t = u;
-            for (int j = 1; j < iterations; ++j) {
+            for (uint32_t j = 1; j < iterations; ++j) {
                 u = get_hmac(password_ptr, password_len,
                               u.data(), u.size(), hash_type);
                 for (size_t k = 0; k < t.size(); ++k) {
@@ -80,9 +100,83 @@ namespace hmac_cpp {
             } else {
                 derived.insert(derived.end(), t.begin(), t.end());
             }
+            secure_zero(u.data(), u.size());
+            secure_zero(t.data(), t.size());
         }
-
+        secure_zero(salt_block.data(), salt_block.size());
         return derived;
+    }
+
+    std::vector<uint8_t> pbkdf2_with_pepper(
+            const void* password_ptr, size_t password_len,
+            const void* salt_ptr, size_t salt_len,
+            const void* pepper_ptr, size_t pepper_len,
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf) {
+        TypeHash hash_type = to_type_hash(prf);
+        auto pwd_prime = get_hmac(pepper_ptr, pepper_len, password_ptr, password_len, hash_type);
+        secure_buffer<uint8_t> tmp(std::move(pwd_prime));
+        auto dk = pbkdf2(tmp.data(), tmp.size(), salt_ptr, salt_len, iterations, dk_len, prf);
+        return dk;
+    }
+
+    std::vector<uint8_t> hkdf_extract_sha256(
+            const void* ikm_ptr, size_t ikm_len,
+            const void* salt_ptr, size_t salt_len) {
+        std::vector<uint8_t> salt_buf;
+        if (salt_ptr == nullptr || salt_len == 0) {
+            salt_buf.assign(hmac_hash::SHA256::DIGEST_SIZE, 0);
+            salt_ptr = salt_buf.data();
+            salt_len = salt_buf.size();
+        }
+        auto prk = get_hmac(salt_ptr, salt_len, ikm_ptr, ikm_len, TypeHash::SHA256);
+        return prk;
+    }
+
+    std::vector<uint8_t> hkdf_expand_sha256(
+            const void* prk_ptr, size_t prk_len,
+            const void* info_ptr, size_t info_len,
+            size_t L) {
+        const size_t HashLen = hmac_hash::SHA256::DIGEST_SIZE;
+        if (prk_ptr == nullptr || prk_len != HashLen)
+            throw std::invalid_argument("HKDF: prk must be HashLen bytes");
+        if (L > 255 * HashLen)
+            throw std::invalid_argument("HKDF: L too large");
+
+        std::vector<uint8_t> okm;
+        okm.reserve(L);
+        std::vector<uint8_t> previous;
+        size_t n = (L + HashLen - 1) / HashLen;
+        for (size_t i = 1; i <= n; ++i) {
+            std::vector<uint8_t> input(previous.begin(), previous.end());
+            if (info_ptr && info_len)
+                input.insert(input.end(),
+                             reinterpret_cast<const uint8_t*>(info_ptr),
+                             reinterpret_cast<const uint8_t*>(info_ptr) + info_len);
+            input.push_back(static_cast<uint8_t>(i));
+            auto t = get_hmac(prk_ptr, prk_len, input.data(), input.size(), TypeHash::SHA256);
+            size_t take = (i == n) ? (L - okm.size()) : t.size();
+            okm.insert(okm.end(), t.begin(), t.begin() + take);
+            previous.assign(t.begin(), t.end());
+            secure_zero(t.data(), t.size());
+            secure_zero(input.data(), input.size());
+        }
+        secure_zero(previous.data(), previous.size());
+        return okm;
+    }
+
+    KeyIv hkdf_key_iv_256(const void* ikm_ptr, size_t ikm_len,
+                          const void* salt_ptr, size_t salt_len,
+                          const std::string& context) {
+        auto prk = hkdf_extract_sha256(ikm_ptr, ikm_len, salt_ptr, salt_len);
+        auto okm = hkdf_expand_sha256(prk.data(), prk.size(),
+                                      context.data(), context.size(), 44);
+        KeyIv out{};
+        std::copy(okm.begin(), okm.begin() + 32, out.key.begin());
+        std::copy(okm.begin() + 32, okm.begin() + 44, out.iv.begin());
+        secure_zero(prk.data(), prk.size());
+        secure_zero(okm.data(), okm.size());
+        return out;
     }
 
     std::string generate_time_token(const std::string &key, int interval_sec, TypeHash hash_type) {

@@ -11,6 +11,7 @@ A lightweight `C++11` library for computing `HMAC` (hash-based message authentic
 - Supports `HMAC` using `SHA256`, `SHA512`, `SHA1`
 - Outputs in binary or hex format
 - Provides **PBKDF2 key derivation** (RFC 8018)
+- Implements **HKDF (RFC 5869)** for key extraction/expansion
 - Support for **time-based tokens**:
     - **HOTP (RFC 4226)** — counter-based one-time passwords
     - **TOTP (RFC 6238)** — time-based one-time passwords
@@ -161,16 +162,31 @@ Returns: Binary digest as `std::vector<uint8_t>`
 #include <hmac_cpp/hmac_utils.hpp>
 
 std::string password = "password";
-std::string salt = "salt";
-std::vector<uint8_t> dk = hmac::pbkdf2(password, salt, 1000, 32, hmac::TypeHash::SHA256);
+std::vector<uint8_t> salt(16, 0x01); // at least 16 bytes
+std::vector<uint8_t> dk = hmac::pbkdf2(password, salt, 1000, 32);
 ```
 
 Parameters:
 
-- `password`, `salt` — Raw byte strings
-- `iterations` — Number of iterations
-- `dk_len` — Desired key length in bytes
-- `hash_type` — Hash function (`SHA1`, `SHA256`, `SHA512`)
+- `password`, `salt` — Raw byte arrays. `salt` must be **>=16 bytes** and unique.
+- `iterations` — Number of iterations (>=1). Tune according to the
+  [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
+- `dk_len` — Desired key length in bytes, up to `(2^32-1) * hLen` (RFC 8018).
+- `prf` — Optional hash (`Sha1`, `Sha256` default, `Sha512`).
+
+⚠️ Low iteration counts or short salts reduce security.
+
+For deployments with a server-side *pepper*, use `pbkdf2_with_pepper(password, salt, pepper, iters, dkLen)`.
+The pepper is a secret key stored separately from the hashed password.
+
+### HKDF (RFC 5869)
+
+```cpp
+std::vector<uint8_t> ikm = {/* secret material */};
+std::vector<uint8_t> salt(16, 0x00);
+auto prk = hmac::hkdf_extract_sha256(ikm, salt);
+auto okm = hmac::hkdf_expand_sha256(prk, {}, 32); // derive 32 bytes
+```
 
 ### 🕓 HOTP and TOTP Tokens
 
