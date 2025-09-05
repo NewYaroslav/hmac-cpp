@@ -236,6 +236,12 @@ auto okm = hmac::hkdf_expand_sha256(prk, {}, 32); // derive 32 bytes
 ### 🕓 HOTP and TOTP Tokens
 
 The library supports generating one-time passwords based on RFC 4226 and RFC 6238.
+Secrets are supplied as raw bytes. If you receive a Base32 string (common in OTP
+URIs), decode it before calling the functions.
+
+- **HOTP** — 6 digits, SHA-1.
+- **TOTP** — 30 s period, 6 digits, SHA-1. `is_totp_token_valid` accepts tokens
+  from the previous and next interval (±1).
 
 #### HOTP (HMAC-based One-Time Password)
 
@@ -246,6 +252,7 @@ std::string key = "12345678901234567890"; // raw key
 uint64_t counter = 0;
 int otp = get_hotp_code(key, counter); // defaults: 6 digits, SHA1
 std::cout << "HOTP: " << otp << std::endl;
+bool ok = (otp == 755224); // RFC 4226 test vector
 ```
 
 #### TOTP (Time-based One-Time Password)
@@ -264,6 +271,14 @@ You can also generate a code for a specific timestamp:
 uint64_t time_at = 1700000000;
 int otp = get_totp_code_at(key, time_at);
 ```
+
+To verify a received code:
+
+```cpp
+bool valid = hmac::is_totp_token_valid(94287082, key, 59, 30, 8, hmac::TypeHash::SHA1); // RFC 6238 test vector
+```
+
+Known test vectors: [RFC 4226 Appendix D](https://www.rfc-editor.org/rfc/rfc4226#appendix-D) and [RFC 6238 Appendix B](https://www.rfc-editor.org/rfc/rfc6238#appendix-B).
 
 ### 🕓 Time-Based HMAC Tokens (Custom HMAC Time Tokens)
 
