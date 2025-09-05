@@ -21,7 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
-        run: brew update && brew install cmake
+        run: |
+          brew update
+          brew uninstall --ignore-dependencies cmake || true
+          brew install cmake
       - name: Configure
         run: cmake -S . -B build -DBUILD_TESTS=ON -DCMAKE_CXX_STANDARD=${{ matrix.std }}
       - name: Build
