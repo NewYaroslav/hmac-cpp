@@ -27,7 +27,7 @@ jobs:
       - name: Build
         run: cmake --build build
       - name: Run tests
-        run: cd build && ctest --output-on-failure
+        run: ctest --test-dir build --output-on-failure
   vcpkg:
     runs-on: ubuntu-latest
     steps:
@@ -42,4 +42,4 @@ jobs:
       - name: Build
         run: cmake --build build
       - name: Run tests
-        run: cd build && ctest --output-on-failure
+        run: ctest --test-dir build --output-on-failure
