@@ -85,9 +85,25 @@ std::string get_hmac(
 - `is_hex` — Возвращать hex-строку (`true`) или бинарные данные (`false`) [по умолчанию: true]
 - `is_upper` — Использовать верхний регистр (только для `hex`) [по умолчанию: false]
 
-Возвращает:  
-Если `is_hex == true`, возвращает HMAC в виде hex-строки (`std::string`).  
+Возвращает:
+Если `is_hex == true`, возвращает HMAC в виде hex-строки (`std::string`).
 Если `is_hex == false`, возвращает HMAC в виде бинарной строки (`std::string`, не предназначена для вывода).
+
+#### Безопасная работа со строковыми ключами
+
+Если секретный ключ получен в виде `std::string` (например, API‑ключ биржи),
+переместите его в `secure_buffer`, чтобы исходная строка сразу очистилась:
+
+```cpp
+#include <cstdlib>
+#include <hmac_cpp/secure_buffer.hpp>
+
+std::string api_key = std::getenv("API_KEY");
+secure_buffer key(std::move(api_key)); // api_key очищена
+
+auto sig = hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
+secure_zero(key); // при необходимости: очистить после использования
+```
 
 ### HMAC (сырые бинарные данные)
 

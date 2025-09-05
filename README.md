@@ -113,6 +113,23 @@ Returns:
 If `is_hex == true`, returns a hexadecimal string (`std::string`) of the HMAC.
 If `is_hex == false`, returns a raw binary HMAC as a `std::string` (not human-readable).
 
+#### Secure handling of string keys
+
+When a secret key is obtained as a `std::string` (e.g. an API key from an exchange),
+move it into a `secure_buffer` to erase the original string immediately:
+
+```cpp
+#include <cstdlib>
+#include <hmac_cpp/secure_buffer.hpp>
+
+std::string api_key = std::getenv("API_KEY");
+secure_buffer key(std::move(api_key)); // api_key is zeroized
+
+std::vector<uint8_t> sig =
+    hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
+secure_zero(key); // optional: wipe after use
+```
+
 ### HMAC (binary data: raw buffer)
 
 ```cpp
@@ -265,20 +282,24 @@ The example is in `example.cpp` and is built automatically when `BUILD_EXAMPLE=O
 ```cpp
 #include <iostream>
 #include <hmac_cpp/hmac.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 int main() {
     std::string input = "grape";
     std::string key = "12345";
 
-    std::string hmac_sha256 = hmac::get_hmac(key, input, hmac::TypeHash::SHA256);
-    std::cout << "HMAC-SHA256: " << hmac_sha256 << std::endl;
-
-    std::string hmac_sha512 = hmac::get_hmac(key, input, hmac::TypeHash::SHA512);
-    std::cout << "HMAC-SHA512: " << hmac_sha512 << std::endl;
+    std::string mac = hmac::get_hmac(key, input, hmac::TypeHash::SHA256);
+    if (hmac::constant_time_equal(mac,
+            "7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca")) {
+        std::cout << "MAC verified\n";
+    }
 
     return 0;
 }
 ```
+
+**Note:** avoid checking input lengths before calling `constant_time_equal`.
+Early length comparisons can leak information through timing side channels.
 
 ## 📚 Resources
 

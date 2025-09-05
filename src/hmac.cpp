@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cstdint>
+#include <cstring>
 #include "hmac_cpp/hmac.hpp"
+#include "hmac_cpp/secure_buffer.hpp"
 
 namespace hmac_cpp {
 
@@ -107,83 +109,56 @@ namespace hmac_cpp {
                 throw std::invalid_argument("Unsupported hash type");
         }
 
-        // Step 1: Normalize key
-        std::vector<uint8_t> key(reinterpret_cast<const uint8_t*>(key_ptr), reinterpret_cast<const uint8_t*>(key_ptr) + key_len);
-        if (key.size() > block_size)
-            key = get_hash(key.data(), key.size(), type);
-        if (key.size() < block_size)
-            key.resize(block_size, 0);
+        secure_buffer<uint8_t> key(block_size);
+        if (key_len > block_size) {
+            auto hashed = get_hash(key_ptr, key_len, type);
+            std::copy(hashed.begin(), hashed.end(), key.begin());
+            if (hashed.size() < block_size)
+                std::fill(key.begin() + hashed.size(), key.end(), 0);
+            secure_zero(hashed.data(), hashed.size());
+        } else {
+            std::memcpy(key.data(), key_ptr, key_len);
+            if (key_len < block_size)
+                std::fill(key.begin() + key_len, key.end(), 0);
+        }
 
-        // Step 2: Create ipad and opad in one pass
-        std::vector<uint8_t> ikeypad(block_size);
-        std::vector<uint8_t> okeypad(block_size);
+        secure_buffer<uint8_t> ikeypad(block_size);
+        secure_buffer<uint8_t> okeypad(block_size);
         for (size_t i = 0; i < block_size; ++i) {
             const uint8_t k = key[i];
             ikeypad[i] = k ^ 0x36;
             okeypad[i] = k ^ 0x5c;
         }
 
-        // Step 3: Compute inner hash
         if (msg_len > SIZE_MAX - block_size)
             throw std::overflow_error("msg_len + block_size overflow");
-        std::vector<uint8_t> inner_data;
-        inner_data.reserve(block_size + msg_len);
-        inner_data.insert(inner_data.end(), ikeypad.begin(), ikeypad.end());
-        inner_data.insert(inner_data.end(), reinterpret_cast<const uint8_t*>(msg_ptr), reinterpret_cast<const uint8_t*>(msg_ptr) + msg_len);
-        std::vector<uint8_t> inner_hash = get_hash(inner_data.data(), inner_data.size(), type);
+        secure_buffer<uint8_t> inner_data(block_size + msg_len);
+        std::copy(ikeypad.begin(), ikeypad.end(), inner_data.begin());
+        std::memcpy(inner_data.data() + block_size, msg_ptr, msg_len);
+        secure_buffer<uint8_t> inner_hash(std::move(get_hash(inner_data.data(), inner_data.size(), type)));
 
-        // Step 4: Compute final HMAC
         if (digest_size > SIZE_MAX - block_size)
             throw std::overflow_error("digest_size + block_size overflow");
-        std::vector<uint8_t> outer_data;
-        outer_data.reserve(block_size + digest_size);
-        outer_data.insert(outer_data.end(), okeypad.begin(), okeypad.end());
-        outer_data.insert(outer_data.end(), inner_hash.begin(), inner_hash.end());
+        secure_buffer<uint8_t> outer_data(block_size + digest_size);
+        std::copy(okeypad.begin(), okeypad.end(), outer_data.begin());
+        std::copy(inner_hash.begin(), inner_hash.end(), outer_data.begin() + block_size);
 
-        return get_hash(outer_data.data(), outer_data.size(), type);
+        auto result = get_hash(outer_data.data(), outer_data.size(), type);
+
+        secure_zero(key.data(), key.size());
+        secure_zero(ikeypad.data(), ikeypad.size());
+        secure_zero(okeypad.data(), okeypad.size());
+        secure_zero(inner_data.data(), inner_data.size());
+        secure_zero(inner_hash.data(), inner_hash.size());
+        secure_zero(outer_data.data(), outer_data.size());
+
+        return result;
     }
 
-    std::string get_hmac(const std::string& key_input, const std::string &msg, TypeHash type, bool is_hex, bool is_upper) {
-        size_t block_size = 0;
-        switch(type) {
-        case TypeHash::SHA1:
-            block_size = hmac_hash::SHA1::BLOCK_SIZE;
-            break;
-        case TypeHash::SHA256:
-            block_size = hmac_hash::SHA256::SHA224_256_BLOCK_SIZE;
-            break;
-        case TypeHash::SHA512:
-            block_size = hmac_hash::SHA512::SHA384_512_BLOCK_SIZE;
-            break;
-        default:
-            throw std::invalid_argument("Unsupported hash type");
-        };
-
-        std::string key = key_input;
-        
-        if(key.size() > block_size) {
-            /* If key length > block size, hash it and pad with zeros to block size */
-            key = get_hash(key, type);
-        }
-        if(key.size() < block_size) {
-            /* Pad key with zeros if it's shorter than block size */
-            key.resize(block_size, '\0');
-        }
-        
-        /* If key length == block size, use it as is */
-        std::string ikeypad;
-        std::string okeypad;
-        
-        ikeypad.reserve(block_size);
-        okeypad.reserve(block_size);
-        
-        for(size_t i = 0; i < block_size; ++i) {
-            ikeypad.push_back(0x36 ^ key[i]);
-            okeypad.push_back(0x5c ^ key[i]);
-        }
-
-        return is_hex 
-            ? to_hex(get_hash(okeypad + get_hash(ikeypad + msg, type), type), is_upper) 
-            : get_hash(okeypad + get_hash(ikeypad + msg, type), type);
+    std::string get_hmac(const std::vector<uint8_t>& key_input, const std::string &msg, TypeHash type, bool is_hex, bool is_upper) {
+        auto hmac_vec = get_hmac(key_input.data(), key_input.size(), msg.data(), msg.size(), type);
+        std::string out(reinterpret_cast<const char*>(hmac_vec.data()), hmac_vec.size());
+        secure_zero(hmac_vec.data(), hmac_vec.size());
+        return is_hex ? to_hex(out, is_upper) : out;
     }
 }

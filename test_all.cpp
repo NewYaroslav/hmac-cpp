@@ -280,6 +280,13 @@ TEST(PBKDF2Unicode, Sha1) {
     EXPECT_TRUE(hmac::constant_time_equals(dk, ref));
 }
 
+TEST(PBKDF2Validation, IterationsLimit) {
+    std::string salt(16, 'a');
+    uint32_t limit = hmac::MAX_PBKDF2_ITERATIONS;
+    EXPECT_NO_THROW(hmac::pbkdf2("password", salt, limit - 1, 32, hmac::Pbkdf2Hash::Sha256));
+    EXPECT_THROW(hmac::pbkdf2("password", salt, limit + 1, 32, hmac::Pbkdf2Hash::Sha256), std::invalid_argument);
+}
+
 TEST(PBKDF2Test, SHA256WithValidSalt) {
     auto salt = from_hex("000102030405060708090a0b0c0d0e0f");
     std::string salt_str(salt.begin(), salt.end());
@@ -297,6 +304,14 @@ TEST(PBKDF2BufferApiTest, SHA256ArrayOutput) {
     std::vector<uint8_t> ref(32);
     ASSERT_TRUE(PKCS5_PBKDF2_HMAC("password", 8, salt.data(), salt.size(), 2, EVP_sha256(), ref.size(), ref.data()));
     EXPECT_TRUE(std::equal(out.begin(), out.end(), ref.begin()));
+}
+
+TEST(PBKDF2BufferApiTest, IterationsLimit) {
+    std::string salt(16, 'a');
+    std::array<uint8_t,32> out{};
+    uint32_t limit = hmac::MAX_PBKDF2_ITERATIONS;
+    EXPECT_TRUE(hmac::pbkdf2_hmac_sha256(std::string("password"), salt, limit - 1, out));
+    EXPECT_FALSE(hmac::pbkdf2_hmac_sha256(std::string("password"), salt, limit + 1, out));
 }
 
 // SHA512 vector from BoringSSL pbkdf_test.cc

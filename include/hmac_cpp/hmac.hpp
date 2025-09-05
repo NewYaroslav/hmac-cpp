@@ -2,9 +2,12 @@
 #define _HMAC_HPP_INCLUDED
 
 #include <cstdint>
+#include <string>
+#include <vector>
 #include "sha1.hpp"
 #include "sha256.hpp"
 #include "sha512.hpp"
+#include "secure_buffer.hpp"
 
 namespace hmac_cpp {
 
@@ -72,13 +75,24 @@ namespace hmac_cpp {
     }
     
     /// \brief Computes HMAC
-    /// \param key Secret key
+    /// \param key Secret key as byte vector
     /// \param msg Message
     /// \param type Hash function type
     /// \param is_hex Return result in hex format
     /// \param is_upper Use uppercase hex
     /// \return HMAC result
-    std::string get_hmac(const std::string& key_input, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false);
+    std::string get_hmac(const std::vector<uint8_t>& key, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false);
+
+    /// \brief Computes HMAC from secure_buffer key
+    inline std::string get_hmac(const secure_buffer<uint8_t>& key, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false) {
+        return get_hmac(std::vector<uint8_t>(key.begin(), key.end()), msg, type, is_hex, is_upper);
+    }
+
+    /// \deprecated Prefer overloads that accept std::vector<uint8_t> or secure_buffer.
+    HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
+    inline std::string get_hmac(const std::string& key_input, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false) {
+        return get_hmac(std::vector<uint8_t>(key_input.begin(), key_input.end()), msg, type, is_hex, is_upper);
+    }
 }
 namespace hmac = hmac_cpp;
 
