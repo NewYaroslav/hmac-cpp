@@ -1,0 +1,16 @@
+name: Benchmarks
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake hyperfine
+      - name: Run benchmarks
+        run: scripts/run_benchmarks.sh
