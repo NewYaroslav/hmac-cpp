@@ -265,20 +265,24 @@ The example is in `example.cpp` and is built automatically when `BUILD_EXAMPLE=O
 ```cpp
 #include <iostream>
 #include <hmac_cpp/hmac.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 int main() {
     std::string input = "grape";
     std::string key = "12345";
 
-    std::string hmac_sha256 = hmac::get_hmac(key, input, hmac::TypeHash::SHA256);
-    std::cout << "HMAC-SHA256: " << hmac_sha256 << std::endl;
-
-    std::string hmac_sha512 = hmac::get_hmac(key, input, hmac::TypeHash::SHA512);
-    std::cout << "HMAC-SHA512: " << hmac_sha512 << std::endl;
+    std::string mac = hmac::get_hmac(key, input, hmac::TypeHash::SHA256);
+    if (hmac::constant_time_equal(mac,
+            "7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca")) {
+        std::cout << "MAC verified\n";
+    }
 
     return 0;
 }
 ```
+
+**Note:** avoid checking input lengths before calling `constant_time_equal`.
+Early length comparisons can leak information through timing side channels.
 
 ## 📚 Resources
 
