@@ -22,10 +22,13 @@ A lightweight `C++11` library for computing `HMAC` (hash-based message authentic
 
 ## 🔧 Build and Installation
 
+Examples, tests, and benchmarks are disabled by default. Enable them with
+`HMACCPP_BUILD_EXAMPLES`, `HMACCPP_BUILD_TESTS`, and `HMACCPP_BUILD_BENCH`.
+
 Use CMake to build:
 
 ```bash
-cmake -B build -DBUILD_EXAMPLE=ON
+cmake -B build -DHMACCPP_BUILD_EXAMPLES=ON
 cmake --build build
 ```
 
@@ -63,7 +66,7 @@ target_link_libraries(my_app PRIVATE hmac_cpp::hmac_cpp)
 Enable tests during configuration and run them with CTest:
 
 ```bash
-cmake -B build -DBUILD_TESTS=ON
+cmake -B build -DHMACCPP_BUILD_TESTS=ON
 cmake --build build
 cd build
 ctest --output-on-failure
@@ -277,7 +280,7 @@ This is useful for stateless authentication, API protection, and one-time tokens
 
 ## 📄 Example
 
-The example is in `example.cpp` and is built automatically when `BUILD_EXAMPLE=ON`.
+The example is in `example.cpp` and builds when `HMACCPP_BUILD_EXAMPLES=ON`.
 
 ```cpp
 #include <iostream>

@@ -1,13 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(hmac_cpp VERSION 0.2.0 LANGUAGES CXX)
 
-if(NOT DEFINED CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 11)
-endif()
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-option(BUILD_EXAMPLE "Build the example program" ON)
-option(BUILD_TESTS "Build the test suite" OFF)
+option(HMACCPP_BUILD_EXAMPLES "Build the example program" OFF)
+option(HMACCPP_BUILD_TESTS "Build the test suite" OFF)
+option(HMACCPP_BUILD_BENCH "Build benchmarks" OFF)
 
 set(HMAC_SOURCES
     src/sha1.cpp
@@ -27,12 +23,17 @@ set(HMAC_HEADERS
 )
 
 add_library(hmac_cpp STATIC ${HMAC_SOURCES})
+target_compile_features(hmac_cpp PUBLIC cxx_std_11)
 target_include_directories(hmac_cpp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-if(BUILD_EXAMPLE)
+if(NOT TARGET hmac_cpp::hmac_cpp)
+    add_library(hmac_cpp::hmac_cpp ALIAS hmac_cpp)
+endif()
+
+if(HMACCPP_BUILD_EXAMPLES)
     add_executable(example example.cpp)
     target_link_libraries(example PRIVATE hmac_cpp)
     target_include_directories(example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -41,7 +42,11 @@ endif()
 include(CMakePackageConfigHelpers)
 install(TARGETS hmac_cpp EXPORT hmac_cppTargets DESTINATION lib)
 install(FILES ${HMAC_HEADERS} DESTINATION include/hmac_cpp)
-install(EXPORT hmac_cppTargets NAMESPACE hmac_cpp:: DESTINATION lib/cmake/hmac_cpp)
+install(EXPORT hmac_cppTargets
+    FILE hmac_cppTargets.cmake
+    NAMESPACE hmac_cpp::
+    DESTINATION lib/cmake/hmac_cpp
+)
 
 configure_package_config_file(
     cmake/hmac_cppConfig.cmake.in
@@ -59,7 +64,7 @@ install(FILES
     DESTINATION lib/cmake/hmac_cpp
 )
 
-if(BUILD_TESTS)
+if(HMACCPP_BUILD_TESTS)
     enable_testing()
     include(FetchContent)
     FetchContent_Declare(
@@ -80,3 +85,8 @@ if(BUILD_TESTS)
     target_include_directories(test_totp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     add_test(NAME test_totp COMMAND test_totp)
 endif()
+
+export(EXPORT hmac_cppTargets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/hmac_cppTargets.cmake"
+    NAMESPACE hmac_cpp::
+)
