@@ -182,55 +182,45 @@ Parameters:
 
 Returns: Binary digest as `std::vector<uint8_t>`
 
-### PBKDF2 Key Derivation
+### PBKDF2
+
+PBKDF2 derives a cryptographic key from a user password. It is typically
+used to unlock encrypted data or verify password hashes.
 
 ```cpp
 #include <hmac_cpp/hmac_utils.hpp>
-
-std::string password = "password";
-std::vector<uint8_t> salt(16, 0x01); // at least 16 bytes
-std::vector<uint8_t> dk = hmac::pbkdf2(password, salt, 1000, 32);
-hmac::Pbkdf2Result stored{salt, 1000, dk};
-auto verify = hmac::pbkdf2(password, stored);
-bool ok = hmac::constant_time_equals(verify.key, stored.key);
+auto salt = hmac::random_bytes(16);
+auto key  = hmac::pbkdf2_hmac_sha256(password, salt, iters, 32);
 ```
 
-Parameters:
+Recommendations:
 
-- `password`, `salt` — Raw byte arrays. `salt` must be **>=16 bytes** and unique.
-- `iterations` — Number of iterations (>=1). Tune according to the
-  [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
-- `dk_len` — Desired key length in bytes, up to `(2^32-1) * hLen` (RFC 8018).
-- `prf` — Optional hash (`Sha1`, `Sha256` default, `Sha512`).
+- **Salt:** 16–32 random bytes.
+- **Iterations:** pick a value so derivation takes ~100–250 ms on the target
+  machine.
+- **Derived key length:** 32 bytes.
+- **Algorithm:** HMAC-SHA-256.
 
-⚠️ Low iteration counts or short salts reduce security.
+Parameters and ciphertext may be serialized as:
+`magic|salt|iters|iv|ct|tag`.
 
-For deployments with a server-side *pepper*, use `pbkdf2_with_pepper(password, salt, pepper, iters, dkLen)`.
-The pepper is a secret key stored separately from the hashed password.
+See `example_pbkdf2.cpp` for a complete example.
 
-### PBKDF2 Security Notes
+#### Recommended Parameters
 
-- Use a random salt of **at least 16 bytes** and never reuse it.
-- Choose an iteration count that takes roughly **200–500 ms** on your target hardware (~2025).
-- Store `{salt, iterations}` alongside the ciphertext or hash; these values are public.
-- Salts and iteration counts must be unique per password.
-- Example serialization: `{magic|ver|prf|salt|iters|dkLen|…}`.
+| Target  | Iterations | Derived key length | PRF |
+|---------|-----------:|------------------:|-----|
+| Desktop | 600000     | 32 bytes          | HMAC-SHA256 |
+| Laptop  | 300000     | 32 bytes          | HMAC-SHA256 |
+| Mobile  | 150000     | 32 bytes          | HMAC-SHA256 |
 
-#### PBKDF2-HMAC-SHA256 + AES-GCM
+#### Security Notes
 
-```cpp
-#include <hmac_cpp/hmac_utils.hpp>
-#include <aes_cpp/aes_utils.hpp>
-
-std::string password = "correct horse battery staple";
-std::vector<uint8_t> salt(16, 0x00); // 16 random bytes
-auto key = hmac::pbkdf2(password, salt, 100000, 32, hmac::Pbkdf2Hash::Sha256);
-
-std::string plaintext = "secret";
-std::vector<uint8_t> aad = {'h','e','a','d','e','r'};
-auto pkt = aes_cpp::utils::encrypt_gcm(plaintext, key, aad);
-auto restored = aes_cpp::utils::decrypt_gcm_to_string(pkt, key, aad);
-```
+- PBKDF2 is CPU-bound and vulnerable to massive GPU/ASIC brute force.
+  Choose high iteration counts or stronger KDFs.
+- Every password requires a unique, random salt of sufficient length.
+- Salts, iteration counts, and algorithms are not secrets—store them
+  alongside the hash or ciphertext.
 
 ### HKDF (RFC 5869)
 
@@ -336,20 +326,6 @@ int main() {
 
 **Note:** avoid checking input lengths before calling `constant_time_equal`.
 Early length comparisons can leak information through timing side channels.
-
-## PBKDF2 Recommended Parameters
-
-| Target  | Iterations | Derived key length | PRF |
-|---------|-----------:|------------------:|-----|
-| Desktop | 600000     | 32 bytes          | HMAC-SHA256 |
-| Laptop  | 300000     | 32 bytes          | HMAC-SHA256 |
-| Mobile  | 150000     | 32 bytes          | HMAC-SHA256 |
-
-## Security Notes
-
-- PBKDF2 is CPU-bound and vulnerable to massive GPU/ASIC brute force. Choose high iteration counts or stronger KDFs.
-- Every password requires a unique, random salt of sufficient length.
-- Salts, iteration counts, and algorithms are not secrets—store them alongside the hash for verification.
 
 ## 📚 Resources
 
