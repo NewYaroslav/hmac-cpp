@@ -6,7 +6,13 @@
 #include <string>
 #include <vector>
 
+#ifndef HMAC_CPP_MAX_PBKDF2_ITERATIONS
+#define HMAC_CPP_MAX_PBKDF2_ITERATIONS 1000000u
+#endif
+
 namespace hmac_cpp {
+
+    static constexpr uint32_t MAX_PBKDF2_ITERATIONS = HMAC_CPP_MAX_PBKDF2_ITERATIONS;
 
     /// \brief Compares two byte arrays in constant time
     /// \param a Pointer to first array
