@@ -67,8 +67,14 @@ _install/
 ```mql5
 #include <hmac-cpp/hmac.mqh>
 
-string hash = hmac::get_hmac("key", "message", hmac::TypeHash::HASH_SHA256);
+string hash = hmac::get_hmac("key", "message", hmac::TypeHash::SHA256);
 ```
+
+| Хеш-функция | Значение в C++           | Значение в MQL           |
+|-------------|--------------------------|--------------------------|
+| SHA1        | `hmac::TypeHash::SHA1`   | – (не доступно)          |
+| SHA256      | `hmac::TypeHash::SHA256` | `hmac::TypeHash::SHA256` |
+| SHA512      | `hmac::TypeHash::SHA512` | `hmac::TypeHash::SHA512` |
 
 ## Использование
 

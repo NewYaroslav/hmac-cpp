@@ -11,7 +11,7 @@ void OnStart() {
     
     // SHA256
     print_section("SHA256");
-    string sha256_output_1 = hmac::get_hash(data, hmac::TypeHash::HASH_SHA256);
+    string sha256_output_1 = hmac::get_hash(data, hmac::TypeHash::SHA256);
     string sha256_output_2 = hmac_hash::sha256(data);
     Print("sha256('", data, "') = ", sha256_output_1);
     Print("sha256('", data, "') = ", sha256_output_2);
@@ -19,7 +19,7 @@ void OnStart() {
     
     // SHA512
     print_section("SHA512");
-    string sha512_output_1 = hmac::get_hash(data, hmac::TypeHash::HASH_SHA512);
+    string sha512_output_1 = hmac::get_hash(data, hmac::TypeHash::SHA512);
     string sha512_output_2 = hmac_hash::sha512(data);
     Print("sha512('", data, "') = ", sha512_output_1);
     Print("sha512('", data, "') = ", sha512_output_2);
@@ -32,19 +32,19 @@ void OnStart() {
     
     // HMAC-SHA256
     print_section("HMAC-SHA256");
-    string hmac_sha256 = hmac::get_hmac(key, data, hmac::TypeHash::HASH_SHA256);
+    string hmac_sha256 = hmac::get_hmac(key, data, hmac::TypeHash::SHA256);
     Print("HMAC('", key, "', '", data, "', SHA256) = ", hmac_sha256);
     Print("Expected: 7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca\n");
     
     // HMAC-SHA512
     print_section("HMAC-SHA512");
-    string hmac_sha512 = hmac::get_hmac(key, data, hmac::TypeHash::HASH_SHA512);
+    string hmac_sha512 = hmac::get_hmac(key, data, hmac::TypeHash::SHA512);
     Print("HMAC('", key, "', '", data, "', SHA512) = ", hmac_sha512);
     Print("Expected: c54ddf9647a949d0df925a1c1f8ba1c9d721a671c396fde1062a71f9f7ffae5dc10f6be15be63bb0363d051365e23f890368c54828497b9aef2eb2fc65b633e6\n");
     
     // HMAC-SHA512 uppercase hex
     print_section("HMAC-SHA512 (uppercase)");
-    string hmac_sha512_upper = hmac::get_hmac(key, data, hmac::TypeHash::HASH_SHA512, true);
+    string hmac_sha512_upper = hmac::get_hmac(key, data, hmac::TypeHash::SHA512, true);
     Print("HMAC('", key, "', '", data, "', SHA512, hex=true, upper=true) = ", hmac_sha512_upper);
     
     // HMAC-TIMED TOKEN
