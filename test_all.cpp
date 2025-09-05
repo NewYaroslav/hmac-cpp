@@ -361,6 +361,15 @@ TEST(PBKDF2Test, SHA256WithValidSalt) {
     EXPECT_TRUE(hmac::constant_time_equals(dk, ref));
 }
 
+TEST(PBKDF2ResultTest, ComputesFromStoredParams) {
+    auto salt = from_hex("000102030405060708090a0b0c0d0e0f");
+    std::string salt_str(salt.begin(), salt.end());
+    auto dk = hmac::pbkdf2(std::string("password"), salt_str, 2, 32, hmac::Pbkdf2Hash::Sha256);
+    hmac::Pbkdf2Result stored{salt, 2, dk};
+    auto out = hmac::pbkdf2(std::string("password"), stored);
+    EXPECT_TRUE(hmac::constant_time_equals(out.key, stored.key));
+}
+
 TEST(PBKDF2BufferApiTest, SHA256ArrayOutput) {
     auto salt = from_hex("000102030405060708090a0b0c0d0e0f");
     std::string salt_str(salt.begin(), salt.end());

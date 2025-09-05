@@ -54,6 +54,12 @@ namespace hmac_cpp {
     /// \brief Hash choices for PBKDF2
     enum class Pbkdf2Hash { Sha1, Sha256, Sha512 };
 
+    struct Pbkdf2Result {
+        std::vector<uint8_t> salt;
+        uint32_t iters;
+        std::vector<uint8_t> key;
+    };
+
     /// \brief Derives a key from a password using PBKDF2 (RFC 8018)
     /// \param password_ptr Pointer to the password buffer
     /// \param password_len Length of the password in bytes
@@ -104,6 +110,39 @@ namespace hmac_cpp {
         return pbkdf2(password.data(), password.size(),
                       salt.data(), salt.size(),
                       iterations, dk_len, prf);
+    }
+
+    template<typename T>
+    inline Pbkdf2Result pbkdf2(
+            const std::vector<T>& password,
+            const Pbkdf2Result& params,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
+        static_assert(std::is_same<T, char>::value || std::is_same<T, uint8_t>::value,
+                      "pbkdf2(vector<T>) supports only char or uint8_t");
+        auto key = pbkdf2(password.data(), password.size(),
+                          params.salt.data(), params.salt.size(),
+                          params.iters, params.key.size(), prf);
+        return {params.salt, params.iters, std::move(key)};
+    }
+
+    inline Pbkdf2Result pbkdf2(
+            const std::string& password,
+            const Pbkdf2Result& params,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
+        auto key = pbkdf2(password.data(), password.size(),
+                          params.salt.data(), params.salt.size(),
+                          params.iters, params.key.size(), prf);
+        return {params.salt, params.iters, std::move(key)};
+    }
+
+    inline Pbkdf2Result pbkdf2(
+            const secure_buffer<uint8_t>& password,
+            const Pbkdf2Result& params,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
+        auto key = pbkdf2(password.data(), password.size(),
+                          params.salt.data(), params.salt.size(),
+                          params.iters, params.key.size(), prf);
+        return {params.salt, params.iters, std::move(key)};
     }
 
     /// \brief Derives PBKDF2 into caller-provided buffer using selected hash.

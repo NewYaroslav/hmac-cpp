@@ -184,6 +184,9 @@ Returns: Binary digest as `std::vector<uint8_t>`
 std::string password = "password";
 std::vector<uint8_t> salt(16, 0x01); // at least 16 bytes
 std::vector<uint8_t> dk = hmac::pbkdf2(password, salt, 1000, 32);
+hmac::Pbkdf2Result stored{salt, 1000, dk};
+auto verify = hmac::pbkdf2(password, stored);
+bool ok = hmac::constant_time_equals(verify.key, stored.key);
 ```
 
 Parameters:
