@@ -4,6 +4,8 @@
 #include <vector>
 #include <limits>
 #include <cerrno>
+#include <random>
+#include <openssl/evp.h>
 
 #include "hmac_cpp/hmac.hpp"
 #include "hmac_cpp/hmac_utils.hpp"
@@ -14,6 +16,16 @@ extern "C" std::time_t time(std::time_t* t) {
     if (t) *t = mock_time_value;
     errno = mock_errno_value;
     return mock_time_value;
+}
+
+static std::vector<uint8_t> from_hex(const std::string& hex) {
+    std::vector<uint8_t> out;
+    out.reserve(hex.size() / 2);
+    for (size_t i = 0; i < hex.size(); i += 2) {
+        std::string byte = hex.substr(i, 2);
+        out.push_back(static_cast<uint8_t>(std::stoi(byte, nullptr, 16)));
+    }
+    return out;
 }
 
 TEST(HashTest, SHA1) {
@@ -78,6 +90,14 @@ TEST(UtilsTest, ConstantTimeEqualsLengthMultiples256) {
     std::string plus512 = base + std::string(512, '\0');
     EXPECT_FALSE(hmac::constant_time_equals(base, plus256));
     EXPECT_FALSE(hmac::constant_time_equals(base, plus512));
+}
+
+TEST(UtilsTest, ConstantTimeEqualsVector) {
+    std::vector<uint8_t> a = {1, 2, 3};
+    std::vector<uint8_t> b = {1, 2, 3};
+    EXPECT_TRUE(hmac::constant_time_equals(a, b));
+    b[2] = 4;
+    EXPECT_FALSE(hmac::constant_time_equals(a, b));
 }
 
 TEST(HMACTest, SHA256) {
@@ -200,20 +220,77 @@ TEST(TokenBoundaryFingerprintTest, MinTime) {
     EXPECT_TRUE(hmac::is_token_valid(token_next, key, fingerprint, interval));
 }
 
-TEST(PBKDF2Test, SHA1) {
-    const std::string password = "password";
-    const std::string salt = "salt";
-    std::vector<uint8_t> dk = hmac::pbkdf2(password, salt, 2, 20, hmac::TypeHash::SHA1);
-    std::string hex = hmac::to_hex(std::string(dk.begin(), dk.end()));
-    EXPECT_EQ(hex, "ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957");
+TEST(PBKDF2Validation, ShortSaltThrows) {
+    EXPECT_THROW(hmac::pbkdf2("password", "salt", 2, 20, hmac::Pbkdf2Hash::Sha1), std::invalid_argument);
 }
 
-TEST(PBKDF2Test, SHA256) {
-    const std::string password = "password";
-    const std::string salt = "salt";
-    std::vector<uint8_t> dk = hmac::pbkdf2(password, salt, 2, 32, hmac::TypeHash::SHA256);
+TEST(PBKDF2Test, SHA256WithValidSalt) {
+    auto salt = from_hex("000102030405060708090a0b0c0d0e0f");
+    std::string salt_str(salt.begin(), salt.end());
+    auto dk = hmac::pbkdf2(std::string("password"), salt_str, 2, 32, hmac::Pbkdf2Hash::Sha256);
+    std::vector<uint8_t> ref(32);
+    ASSERT_TRUE(PKCS5_PBKDF2_HMAC("password", 8, salt.data(), salt.size(), 2, EVP_sha256(), ref.size(), ref.data()));
+    EXPECT_TRUE(hmac::constant_time_equals(dk, ref));
+}
+
+// SHA512 vector from BoringSSL pbkdf_test.cc
+TEST(PBKDF2Test, BoringSSL_SHA512) {
+    auto dk = hmac::pbkdf2("passwordPASSWORDpassword",
+                           "saltSALTsaltSALTsaltSALTsaltSALTsalt",
+                           4096, 64, hmac::Pbkdf2Hash::Sha512);
     std::string hex = hmac::to_hex(std::string(dk.begin(), dk.end()));
-    EXPECT_EQ(hex, "ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43");
+    EXPECT_EQ(hex,
+              "8c0511f4c6e597c6ac6315d8f0362e225f3c501495ba23b868c005174dc4ee71115b59f9e60cd9532fa33e0f75aefe30225c583a186cd82bd4daea9724a3d3b8");
+}
+
+TEST(PBKDF2Test, OpenSSLRandom) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, 255);
+    for (auto prf : {hmac::Pbkdf2Hash::Sha1, hmac::Pbkdf2Hash::Sha256, hmac::Pbkdf2Hash::Sha512}) {
+        std::vector<uint8_t> pwd(16), salt(16);
+        for (int i = 0; i < 2; ++i) {
+            for (auto &x : pwd) x = static_cast<uint8_t>(dist(gen));
+            for (auto &x : salt) x = static_cast<uint8_t>(dist(gen));
+            size_t dk_len = (prf == hmac::Pbkdf2Hash::Sha1) ? 20 : 32;
+            auto ours = hmac::pbkdf2(pwd, salt, 1000, dk_len, prf);
+            std::vector<uint8_t> ref(dk_len);
+            const EVP_MD* md = nullptr;
+            switch (prf) {
+                case hmac::Pbkdf2Hash::Sha1: md = EVP_sha1(); break;
+                case hmac::Pbkdf2Hash::Sha256: md = EVP_sha256(); break;
+                case hmac::Pbkdf2Hash::Sha512: md = EVP_sha512(); break;
+            }
+            ASSERT_TRUE(PKCS5_PBKDF2_HMAC(reinterpret_cast<const char*>(pwd.data()), pwd.size(),
+                                          salt.data(), salt.size(), 1000, md, dk_len, ref.data()));
+            EXPECT_TRUE(hmac::constant_time_equals(ours, ref));
+        }
+    }
+}
+
+TEST(HKDFTest, RFC5869Case1) {
+    std::vector<uint8_t> ikm(22, 0x0b);
+    auto salt = from_hex("000102030405060708090a0b0c");
+    auto info = from_hex("f0f1f2f3f4f5f6f7f8f9");
+    auto prk = hmac::hkdf_extract_sha256(ikm, salt);
+    std::string prk_hex = hmac::to_hex(std::string(prk.begin(), prk.end()));
+    EXPECT_EQ(prk_hex, "077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5");
+    auto okm = hmac::hkdf_expand_sha256(prk, info, 42);
+    std::string okm_hex = hmac::to_hex(std::string(okm.begin(), okm.end()));
+    EXPECT_EQ(okm_hex,
+              "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865");
+}
+
+TEST(PBKDF2Test, WithPepper) {
+    std::string password = "secret";
+    std::string pepper = "server";
+    std::vector<uint8_t> salt_vec(16, 0x03);
+    std::string salt(salt_vec.begin(), salt_vec.end());
+    auto dk1 = hmac::pbkdf2_with_pepper(password, salt, pepper, 1000, 32);
+    auto inner = hmac::get_hmac(pepper, password, hmac::TypeHash::SHA256, false);
+    std::vector<uint8_t> inner_vec(inner.begin(), inner.end());
+    auto dk2 = hmac::pbkdf2(inner_vec, salt_vec, 1000, 32, hmac::Pbkdf2Hash::Sha256);
+    EXPECT_TRUE(hmac::constant_time_equals(dk1, dk2));
 }
 
 TEST(TimeErrorTest, MinusOneNoErrno) {

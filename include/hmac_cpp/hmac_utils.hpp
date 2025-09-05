@@ -2,16 +2,33 @@
 #define _HMAC_UTILS_HPP_INCLUDED
 
 #include "hmac.hpp"
+#include <array>
 #include <string>
 #include <vector>
 
 namespace hmac_cpp {
 
-    /// \brief Compares two strings in constant time
-    /// \param a First string
-    /// \param b Second string
-    /// \return true if both strings are equal
-    bool constant_time_equals(const std::string &a, const std::string &b);
+    /// \brief Compares two byte arrays in constant time
+    /// \param a Pointer to first array
+    /// \param a_len Length of the first array
+    /// \param b Pointer to second array
+    /// \param b_len Length of the second array
+    /// \return true if both arrays are equal
+    bool constant_time_equals(const uint8_t* a, size_t a_len,
+                              const uint8_t* b, size_t b_len);
+
+    inline bool constant_time_equals(const std::vector<uint8_t>& a,
+                                     const std::vector<uint8_t>& b) {
+        return constant_time_equals(a.data(), a.size(), b.data(), b.size());
+    }
+
+    inline bool constant_time_equals(const std::string &a, const std::string &b) {
+        return constant_time_equals(reinterpret_cast<const uint8_t*>(a.data()), a.size(),
+                                    reinterpret_cast<const uint8_t*>(b.data()), b.size());
+    }
+
+    /// \brief Hash choices for PBKDF2
+    enum class Pbkdf2Hash { Sha1, Sha256, Sha512 };
 
     /// \brief Derives a key from a password using PBKDF2 (RFC 8018)
     /// \param password_ptr Pointer to the password buffer
@@ -25,32 +42,103 @@ namespace hmac_cpp {
     std::vector<uint8_t> pbkdf2(
             const void* password_ptr, size_t password_len,
             const void* salt_ptr, size_t salt_len,
-            int iterations, size_t dk_len,
-            TypeHash hash_type);
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256);
 
     /// \brief Derives a key using PBKDF2 from vector-based password and salt
     template<typename T>
     inline std::vector<uint8_t> pbkdf2(
             const std::vector<T>& password,
             const std::vector<T>& salt,
-            int iterations, size_t dk_len,
-            TypeHash hash_type) {
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
         static_assert(std::is_same<T, char>::value || std::is_same<T, uint8_t>::value,
                       "pbkdf2(vector<T>) supports only char or uint8_t");
         return pbkdf2(password.data(), password.size(),
                       salt.data(), salt.size(),
-                      iterations, dk_len, hash_type);
+                      iterations, dk_len, prf);
     }
 
     /// \brief Derives a key using PBKDF2 from string-based password and salt
     inline std::vector<uint8_t> pbkdf2(
             const std::string& password,
             const std::string& salt,
-            int iterations, size_t dk_len,
-            TypeHash hash_type) {
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
         return pbkdf2(password.data(), password.size(),
                       salt.data(), salt.size(),
-                      iterations, dk_len, hash_type);
+                      iterations, dk_len, prf);
+    }
+
+    std::vector<uint8_t> pbkdf2_with_pepper(
+            const void* password_ptr, size_t password_len,
+            const void* salt_ptr, size_t salt_len,
+            const void* pepper_ptr, size_t pepper_len,
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256);
+
+    template<typename T>
+    inline std::vector<uint8_t> pbkdf2_with_pepper(
+            const std::vector<T>& password,
+            const std::vector<T>& salt,
+            const std::vector<T>& pepper,
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
+        static_assert(std::is_same<T, char>::value || std::is_same<T, uint8_t>::value,
+                      "pbkdf2_with_pepper(vector<T>) supports only char or uint8_t");
+        return pbkdf2_with_pepper(password.data(), password.size(),
+                                  salt.data(), salt.size(),
+                                  pepper.data(), pepper.size(),
+                                  iterations, dk_len, prf);
+    }
+
+    inline std::vector<uint8_t> pbkdf2_with_pepper(
+            const std::string& password,
+            const std::string& salt,
+            const std::string& pepper,
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
+        return pbkdf2_with_pepper(password.data(), password.size(),
+                                  salt.data(), salt.size(),
+                                  pepper.data(), pepper.size(),
+                                  iterations, dk_len, prf);
+    }
+
+    std::vector<uint8_t> hkdf_extract_sha256(
+            const void* ikm_ptr, size_t ikm_len,
+            const void* salt_ptr, size_t salt_len);
+
+    inline std::vector<uint8_t> hkdf_extract_sha256(
+            const std::vector<uint8_t>& ikm,
+            const std::vector<uint8_t>& salt) {
+        return hkdf_extract_sha256(ikm.data(), ikm.size(), salt.data(), salt.size());
+    }
+
+    std::vector<uint8_t> hkdf_expand_sha256(
+            const void* prk_ptr, size_t prk_len,
+            const void* info_ptr, size_t info_len,
+            size_t L);
+
+    inline std::vector<uint8_t> hkdf_expand_sha256(
+            const std::vector<uint8_t>& prk,
+            const std::vector<uint8_t>& info,
+            size_t L) {
+        return hkdf_expand_sha256(prk.data(), prk.size(), info.data(), info.size(), L);
+    }
+
+    struct KeyIv {
+        std::array<uint8_t,32> key;
+        std::array<uint8_t,12> iv;
+    };
+
+    KeyIv hkdf_key_iv_256(const void* ikm_ptr, size_t ikm_len,
+                          const void* salt_ptr, size_t salt_len,
+                          const std::string& context);
+
+    inline KeyIv hkdf_key_iv_256(const std::vector<uint8_t>& ikm,
+                                 const std::vector<uint8_t>& salt,
+                                 const std::string& context) {
+        return hkdf_key_iv_256(ikm.data(), ikm.size(), salt.data(), salt.size(), context);
     }
 
     /// \brief Generates a time-based HMAC-SHA256 token

@@ -23,6 +23,7 @@ set(HMAC_HEADERS
     include/hmac_cpp/sha1.hpp
     include/hmac_cpp/sha256.hpp
     include/hmac_cpp/sha512.hpp
+    include/hmac_cpp/secure_buffer.hpp
 )
 
 add_library(hmac_cpp STATIC ${HMAC_SOURCES})
@@ -68,8 +69,9 @@ if(BUILD_TESTS)
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     FetchContent_MakeAvailable(googletest)
+    find_package(OpenSSL REQUIRED)
     add_executable(test_all test_all.cpp)
-    target_link_libraries(test_all PRIVATE hmac_cpp gtest_main)
+    target_link_libraries(test_all PRIVATE hmac_cpp gtest_main OpenSSL::Crypto)
     target_include_directories(test_all PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     add_test(NAME test_all COMMAND test_all)
 
