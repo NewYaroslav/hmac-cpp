@@ -110,12 +110,11 @@ string hash = hmac::get_hmac("key", "message", hmac::TypeHash::SHA256);
 
 ```cpp
 std::string get_hmac(
-    std::string key,
+    const std::string& key,
     const std::string& msg,
-    const TypeHash type,
+    TypeHash type,
     bool is_hex = true,
-    bool is_upper = false
-);
+    bool is_upper = false);
 ```
 
 Parameters:
@@ -128,7 +127,7 @@ Parameters:
 
 Returns:
 If `is_hex == true`, returns a hexadecimal string (`std::string`) of the HMAC.
-If `is_hex == false`, returns a raw binary HMAC as a `std::string` (not human-readable).
+If `is_hex == false`, returns a raw binary string; for binary output, prefer the `std::vector<uint8_t>` overload.
 
 #### Secure handling of string keys
 
