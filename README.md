@@ -95,8 +95,14 @@ You can use the same interface inside your MQL5 scripts and experts:
 ```mql5
 #include <hmac-cpp/hmac.mqh>
 
-string hash = hmac::get_hmac("key", "message", hmac::TypeHash::HASH_SHA256);
+string hash = hmac::get_hmac("key", "message", hmac::TypeHash::SHA256);
 ```
+
+| Hash function | C++ enum              | MQL enum              |
+|---------------|----------------------|-----------------------|
+| SHA1          | `hmac::TypeHash::SHA1`| – (not available)     |
+| SHA256        | `hmac::TypeHash::SHA256` | `hmac::TypeHash::SHA256` |
+| SHA512        | `hmac::TypeHash::SHA512` | `hmac::TypeHash::SHA512` |
 
 ## Usage
 

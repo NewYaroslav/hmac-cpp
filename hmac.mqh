@@ -13,8 +13,8 @@ namespace hmac {
 
     /// \brief Type of the hash function used
     enum TypeHash {
-        HASH_SHA256 = 0, ///< Use SHA256
-        HASH_SHA512 = 1, ///< Use SHA512
+        SHA256 = 0, ///< Use SHA256
+        SHA512 = 1, ///< Use SHA512
     };
     
     /// \brief Converts a byte array to hexadecimal string
@@ -66,7 +66,7 @@ namespace hmac {
     /// \param type Hash function type
     void calc_hash(uchar &digest[], const uchar &data[], TypeHash type) {
         switch(type) {
-            case TypeHash::HASH_SHA256: {
+            case TypeHash::SHA256: {
                 ArrayResize(digest, SHA256_DIGEST_SIZE);
                 ArrayFill(digest, 0, SHA256_DIGEST_SIZE, 0);
                 hmac_hash::SHA256 ctx;
@@ -75,7 +75,7 @@ namespace hmac {
                 ctx.finish(digest);
                 break;
             }
-            case TypeHash::HASH_SHA512: {
+            case TypeHash::SHA512: {
                 ArrayResize(digest, SHA512_DIGEST_SIZE);
                 ArrayFill(digest, 0, SHA512_DIGEST_SIZE, 0);
                 hmac_hash::SHA512 ctx;
@@ -116,11 +116,11 @@ namespace hmac {
         int block_size = 0;
         int digest_size = 0;
         switch(type) {
-        case TypeHash::HASH_SHA256:
+        case TypeHash::SHA256:
             block_size = SHA224_256_BLOCK_SIZE;
             digest_size = SHA256_DIGEST_SIZE;
             break;
-        case TypeHash::HASH_SHA512:
+        case TypeHash::SHA512:
             block_size = SHA384_512_BLOCK_SIZE;
             digest_size = SHA512_DIGEST_SIZE;
             break;

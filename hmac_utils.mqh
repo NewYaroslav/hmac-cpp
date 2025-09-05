@@ -15,7 +15,7 @@ namespace hmac {
     /// \param interval_sec Interval in seconds that defines token rotation. Default is 60 seconds
     /// \param hash_type Hash function to use. Default is SHA256
     /// \return Hex-encoded HMAC-SHA256 of the rounded time value
-    string generate_time_token(const string &key, int interval_sec = 60, hmac::TypeHash hash_type = hmac::TypeHash::HASH_SHA256) {
+    string generate_time_token(const string &key, int interval_sec = 60, hmac::TypeHash hash_type = hmac::TypeHash::SHA256) {
        datetime now = TimeGMT();
        datetime rounded = (now / interval_sec) * interval_sec;
        return hmac::get_hmac(key, IntegerToString(rounded), hash_type);
@@ -27,7 +27,7 @@ namespace hmac {
     /// \param interval_sec Interval in seconds that defines token rotation. Default is 60 seconds
     /// \param hash_type Hash function to use. Default is SHA256
     /// \return true if the token is valid within the ±1 interval range; false otherwise
-    bool is_token_valid(const string &token, const string &key, int interval_sec = 60, hmac::TypeHash hash_type = hmac::TypeHash::HASH_SHA256) {
+    bool is_token_valid(const string &token, const string &key, int interval_sec = 60, hmac::TypeHash hash_type = hmac::TypeHash::SHA256) {
         datetime now = TimeGMT();
         datetime rounded = (now / interval_sec) * interval_sec;
         if (token == get_hmac(key, IntegerToString(rounded), hash_type)) return true;
@@ -42,7 +42,7 @@ namespace hmac {
     /// \param interval_sec Interval in seconds that defines token rotation. Default is 60 seconds
     /// \param hash_type Hash function to use. Default is SHA256
     /// \return Hex-encoded HMAC-SHA256 of the concatenated timestamp and fingerprint
-    string generate_time_token(const string &key, const string &fingerprint, int interval_sec = 60, hmac::TypeHash hash_type = hmac::TypeHash::HASH_SHA256) {
+    string generate_time_token(const string &key, const string &fingerprint, int interval_sec = 60, hmac::TypeHash hash_type = hmac::TypeHash::SHA256) {
        datetime now = TimeGMT();
        datetime rounded = (now / interval_sec) * interval_sec;
        string payload = IntegerToString(rounded) + "|" + fingerprint;
@@ -56,7 +56,7 @@ namespace hmac {
     /// \param interval_sec Interval in seconds that defines token rotation. Default is 60 seconds
     /// \param hash_type Hash function to use. Default is SHA256
     /// \return true if the token is valid within the ±1 interval range; false otherwise
-    bool is_token_valid(const string &token, const string &key, const string &fingerprint, int interval_sec = 60, hmac::TypeHash hash_type = hmac::TypeHash::HASH_SHA256) {
+    bool is_token_valid(const string &token, const string &key, const string &fingerprint, int interval_sec = 60, hmac::TypeHash hash_type = hmac::TypeHash::SHA256) {
         datetime now = TimeGMT();
         datetime rounded = (now / interval_sec) * interval_sec;
         string prefix = "|" + fingerprint;
