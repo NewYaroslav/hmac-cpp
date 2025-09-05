@@ -267,13 +267,16 @@ int otp = get_totp_code_at(key, time_at);
 
 ### 🕓 Time-Based HMAC Tokens (Custom HMAC Time Tokens)
 
-The library also includes a **lightweight implementation of time-based HMAC tokens**, which are not directly based on RFC 4226/6238 (HOTP/TOTP). These tokens:
+The library also includes a **lightweight implementation of time-based HMAC tokens**. This is *not* TOTP or HOTP; it's a simple `HMAC(timestamp)` approach. These tokens:
 
 - Are based on `HMAC(timestamp)`
-- Are returned as `hex` strings
+- Default to `SHA256` but also support `SHA1` and `SHA512`
+- Use the full HMAC digest as the tag (32 bytes → 64 hex chars with `SHA256`)
+- Are returned as lowercase `hex` strings
+- Are valid for the previous, current, and next interval (±`interval_sec`)
 - Require no server-side state (stateless)
 - Support binding to a *client fingerprint* (e.g. device ID)
-- Support `SHA1`, `SHA256`, and `SHA512`
+- Provide basic replay protection and are intended for low-risk scenarios
 
 #### Example:
 
