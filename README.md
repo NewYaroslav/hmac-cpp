@@ -113,6 +113,23 @@ Returns:
 If `is_hex == true`, returns a hexadecimal string (`std::string`) of the HMAC.
 If `is_hex == false`, returns a raw binary HMAC as a `std::string` (not human-readable).
 
+#### Secure handling of string keys
+
+When a secret key is obtained as a `std::string` (e.g. an API key from an exchange),
+move it into a `secure_buffer` to erase the original string immediately:
+
+```cpp
+#include <cstdlib>
+#include <hmac_cpp/secure_buffer.hpp>
+
+std::string api_key = std::getenv("API_KEY");
+secure_buffer key(std::move(api_key)); // api_key is zeroized
+
+std::vector<uint8_t> sig =
+    hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
+secure_zero(key); // optional: wipe after use
+```
+
 ### HMAC (binary data: raw buffer)
 
 ```cpp

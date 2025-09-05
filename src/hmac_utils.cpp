@@ -85,13 +85,13 @@ namespace hmac_cpp {
             salt_block[salt_len + 2] = static_cast<uint8_t>((i >> 8) & 0xFF);
             salt_block[salt_len + 3] = static_cast<uint8_t>(i & 0xFF);
 
-            std::vector<uint8_t> u = get_hmac(password_ptr, password_len,
-                                              salt_block.data(), salt_block.size(),
-                                              hash_type);
-            std::vector<uint8_t> t = u;
+            secure_buffer<uint8_t> u(std::move(get_hmac(password_ptr, password_len,
+                                                         salt_block.data(), salt_block.size(),
+                                                         hash_type)));
+            secure_buffer<uint8_t> t = u;
             for (uint32_t j = 1; j < iterations; ++j) {
-                u = get_hmac(password_ptr, password_len,
-                              u.data(), u.size(), hash_type);
+                u = secure_buffer<uint8_t>(get_hmac(password_ptr, password_len,
+                                                    u.data(), u.size(), hash_type));
                 for (size_t k = 0; k < t.size(); ++k) {
                     t[k] ^= u[k];
                 }
@@ -141,13 +141,13 @@ namespace hmac_cpp {
             salt_block[salt_len + 2] = static_cast<uint8_t>((i >> 8) & 0xFF);
             salt_block[salt_len + 3] = static_cast<uint8_t>(i & 0xFF);
 
-            std::vector<uint8_t> u = get_hmac(password_ptr, password_len,
-                                              salt_block.data(), salt_block.size(),
-                                              TypeHash::SHA256);
-            std::vector<uint8_t> t = u;
+            secure_buffer<uint8_t> u(std::move(get_hmac(password_ptr, password_len,
+                                                         salt_block.data(), salt_block.size(),
+                                                         TypeHash::SHA256)));
+            secure_buffer<uint8_t> t = u;
             for (uint32_t j = 1; j < iterations; ++j) {
-                u = get_hmac(password_ptr, password_len,
-                              u.data(), u.size(), TypeHash::SHA256);
+                u = secure_buffer<uint8_t>(get_hmac(password_ptr, password_len,
+                                                    u.data(), u.size(), TypeHash::SHA256));
                 for (size_t k = 0; k < t.size(); ++k) {
                     t[k] ^= u[k];
                 }
@@ -172,6 +172,7 @@ namespace hmac_cpp {
         auto pwd_prime = get_hmac(pepper_ptr, pepper_len, password_ptr, password_len, hash_type);
         secure_buffer<uint8_t> tmp(std::move(pwd_prime));
         auto dk = pbkdf2(tmp.data(), tmp.size(), salt_ptr, salt_len, iterations, dk_len, prf);
+        secure_zero(tmp.data(), tmp.size());
         return dk;
     }
 
@@ -234,7 +235,7 @@ namespace hmac_cpp {
         return out;
     }
 
-    std::string generate_time_token(const std::string &key, int interval_sec, TypeHash hash_type) {
+    std::string generate_time_token(const std::vector<uint8_t> &key, int interval_sec, TypeHash hash_type) {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
@@ -247,7 +248,7 @@ namespace hmac_cpp {
         return get_hmac(key, std::to_string(rounded), hash_type);
     }
 
-    bool is_token_valid(const std::string &token, const std::string &key, int interval_sec, TypeHash hash_type) {
+    bool is_token_valid(const std::string &token, const std::vector<uint8_t> &key, int interval_sec, TypeHash hash_type) {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
@@ -267,7 +268,7 @@ namespace hmac_cpp {
         return false;
     }
 
-    std::string generate_time_token(const std::string &key, const std::string &fingerprint, int interval_sec, TypeHash hash_type) {
+    std::string generate_time_token(const std::vector<uint8_t> &key, const std::string &fingerprint, int interval_sec, TypeHash hash_type) {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }
@@ -281,7 +282,7 @@ namespace hmac_cpp {
         return get_hmac(key, payload, hash_type);
     }
 
-    bool is_token_valid(const std::string &token, const std::string &key, const std::string &fingerprint, int interval_sec, TypeHash hash_type) {
+    bool is_token_valid(const std::string &token, const std::vector<uint8_t> &key, const std::string &fingerprint, int interval_sec, TypeHash hash_type) {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
         }

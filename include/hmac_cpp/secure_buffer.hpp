@@ -4,9 +4,24 @@
 #include <cstddef>
 #include <vector>
 #include <type_traits>
+#include <string>
+
+// Macro to mark deprecated APIs in a compiler-portable way
+#ifndef HMACCPP_DEPRECATED
+#if defined(__clang__) || defined(__GNUC__)
+#define HMACCPP_DEPRECATED(msg) __attribute__((deprecated(msg)))
+#elif defined(_MSC_VER)
+#define HMACCPP_DEPRECATED(msg) __declspec(deprecated(msg))
+#else
+#define HMACCPP_DEPRECATED(msg)
+#endif
+#endif
 
 namespace hmac_cpp {
 
+/// \brief Securely zeroes a memory region.
+/// \param ptr Pointer to the memory to wipe.
+/// \param len Number of bytes to set to zero.
 inline void secure_zero(void* ptr, size_t len) {
     volatile unsigned char* p = static_cast<volatile unsigned char*>(ptr);
     while (len--) {
@@ -14,6 +29,8 @@ inline void secure_zero(void* ptr, size_t len) {
     }
 }
 
+/// \brief Vector-like buffer that zeroizes its contents on destruction.
+/// \tparam T Trivial value type stored in the buffer (defaults to uint8_t).
 template<class T = uint8_t>
 struct secure_buffer {
     static_assert(std::is_trivial<T>::value, "secure_buffer requires trivial type");
@@ -21,6 +38,14 @@ struct secure_buffer {
     secure_buffer() = default;
     explicit secure_buffer(size_t n) : buf(n) {}
     explicit secure_buffer(std::vector<T>&& v) : buf(std::move(v)) {}
+    /// \brief Constructs from std::string rvalue and zeroizes the source.
+    template<class U = T, typename std::enable_if<std::is_same<U, uint8_t>::value, int>::type = 0>
+    explicit secure_buffer(std::string&& s) : buf(s.begin(), s.end()) {
+        if (!s.empty()) {
+            secure_zero(&s[0], s.size());
+            s.clear();
+        }
+    }
     ~secure_buffer() { secure_zero(buf.data(), buf.size() * sizeof(T)); }
 
     T* data() { return buf.data(); }
