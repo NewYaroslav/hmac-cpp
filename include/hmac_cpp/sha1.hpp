@@ -24,11 +24,12 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include "api.hpp"
 
 namespace hmac_hash {
 
     /// \brief Class for computing SHA1 hash
-    class SHA1 {
+    class HMAC_CPP_API SHA1 {
     public:
 
         /// \brief Initializes SHA1 context
@@ -60,18 +61,18 @@ namespace hmac_hash {
     /// \param data Pointer to input data
     /// \param length Length of the input data
     /// \param digest Output buffer of size SHA1::DIGEST_SIZE
-    void sha1(const void* data, size_t length, uint8_t* digest);
+    HMAC_CPP_API void sha1(const void* data, size_t length, uint8_t* digest);
 
     /// \brief Computes SHA1 hash of a raw byte buffer
     /// \param data Pointer to input data
     /// \param length Length of the input data
     /// \return Vector containing the SHA1 digest
-    std::vector<uint8_t> sha1(const void* data, size_t length);
+    HMAC_CPP_API std::vector<uint8_t> sha1(const void* data, size_t length);
     
     /// \brief Computes SHA1 hash of a string
     /// \param input Input string
     /// \return Hash as a binary string
-    std::string sha1(const std::string &input);
+    HMAC_CPP_API std::string sha1(const std::string &input);
     
     /// \brief Computes SHA1 hash of a vector of bytes
     /// \tparam T Type of the vector element (char or uint8_t)

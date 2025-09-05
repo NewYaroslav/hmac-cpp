@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "api.hpp"
 #include "sha1.hpp"
 #include "sha256.hpp"
 #include "sha512.hpp"
@@ -22,20 +23,20 @@ namespace hmac_cpp {
     /// \param input Input string
     /// \param is_upper Flag for uppercase hex
     /// \return Hexadecimal string
-    std::string to_hex(const std::string& input, bool is_upper = false);
+    HMAC_CPP_API std::string to_hex(const std::string& input, bool is_upper = false);
 
     /// \brief Computes hash of the input string
     /// \param input Input string
     /// \param type Hash function type
     /// \return Hash result
-    std::string get_hash(const std::string &input, TypeHash type);
+    HMAC_CPP_API std::string get_hash(const std::string &input, TypeHash type);
     
     /// \brief Computes a hash of a raw buffer using the selected hash function
     /// \param data Pointer to input data
     /// \param length Length of the input data
     /// \param type Hash function type
     /// \return Binary hash result as std::vector<uint8_t>
-    std::vector<uint8_t> get_hash(const void* data, size_t length, TypeHash type);
+    HMAC_CPP_API std::vector<uint8_t> get_hash(const void* data, size_t length, TypeHash type);
     
     /// \brief Computes a hash of a vector using the selected hash function.
     /// \tparam T Type of the vector element (char or uint8_t).
@@ -52,7 +53,7 @@ namespace hmac_cpp {
 
     /// \brief Streaming HMAC computation context.
     /// \thread_safety Not thread-safe.
-    class HmacContext {
+    class HMAC_CPP_API HmacContext {
     public:
         /// \brief Construct context for selected hash.
         /// \param type Hash function type.
@@ -91,7 +92,7 @@ namespace hmac_cpp {
     /// \param type Hash function type
     /// \return HMAC result as a vector of bytes
     /// \throws std::invalid_argument If any pointer is null while the corresponding length is non-zero
-    std::vector<uint8_t> get_hmac(const void* key_ptr, size_t key_len, const void* msg_ptr, size_t msg_len, TypeHash type);
+    HMAC_CPP_API std::vector<uint8_t> get_hmac(const void* key_ptr, size_t key_len, const void* msg_ptr, size_t msg_len, TypeHash type);
 
     /// \brief Computes HMAC from key and message byte vectors using the specified hash function
     /// \tparam T Byte type: must be either char or uint8_t
@@ -114,7 +115,7 @@ namespace hmac_cpp {
     /// \param is_hex Return result in hex format
     /// \param is_upper Use uppercase hex
     /// \return HMAC result
-    std::string get_hmac(const std::vector<uint8_t>& key, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false);
+    HMAC_CPP_API std::string get_hmac(const std::vector<uint8_t>& key, const std::string &msg, TypeHash type, bool is_hex = true, bool is_upper = false);
 
     /// \brief Compute HMAC using secure_buffer key.
     /// \param key Secret key bytes.
@@ -140,6 +141,7 @@ namespace hmac_cpp {
         return get_hmac(std::vector<uint8_t>(key_input.begin(), key_input.end()), msg, type, is_hex, is_upper);
     }
 }
+
 namespace hmac = hmac_cpp;
 
 #endif // _HMAC_HPP_INCLUDED

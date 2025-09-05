@@ -14,6 +14,7 @@ set(HMAC_SOURCES
 )
 
 set(HMAC_HEADERS
+    include/hmac_cpp/api.hpp
     include/hmac_cpp/hmac.hpp
     include/hmac_cpp/hmac_utils.hpp
     include/hmac_cpp/sha1.hpp
@@ -22,12 +23,24 @@ set(HMAC_HEADERS
     include/hmac_cpp/secure_buffer.hpp
 )
 
-add_library(hmac_cpp STATIC ${HMAC_SOURCES})
+add_library(hmac_cpp ${HMAC_SOURCES})
 target_compile_features(hmac_cpp PUBLIC cxx_std_11)
 target_include_directories(hmac_cpp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(hmac_cpp PRIVATE HMAC_CPP_BUILD)
+else()
+    target_compile_definitions(hmac_cpp PUBLIC HMAC_CPP_STATIC)
+endif()
+
+if(MSVC)
+    target_compile_options(hmac_cpp PRIVATE /wd4251)
+else()
+    target_compile_options(hmac_cpp PRIVATE -fvisibility=hidden)
+endif()
 
 if(NOT TARGET hmac_cpp::hmac_cpp)
     add_library(hmac_cpp::hmac_cpp ALIAS hmac_cpp)

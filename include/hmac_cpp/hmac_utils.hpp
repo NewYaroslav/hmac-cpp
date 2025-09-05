@@ -21,7 +21,7 @@ namespace hmac_cpp {
     /// \param b Pointer to second array
     /// \param b_len Length of the second array
     /// \return true if both arrays are equal
-    bool constant_time_equals(const uint8_t* a, size_t a_len,
+    HMAC_CPP_API bool constant_time_equals(const uint8_t* a, size_t a_len,
                               const uint8_t* b, size_t b_len);
 
     /// \brief Compare vectors in constant time.
@@ -98,7 +98,7 @@ namespace hmac_cpp {
     /// \param dk_len Desired length of the derived key in bytes, must be positive
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512)
     /// \return Derived key as a vector of bytes
-    std::vector<uint8_t> pbkdf2(
+    HMAC_CPP_API std::vector<uint8_t> pbkdf2(
             const void* password_ptr, size_t password_len,
             const void* salt_ptr, size_t salt_len,
             uint32_t iterations, size_t dk_len,
@@ -220,7 +220,7 @@ namespace hmac_cpp {
     /// \param out_ptr Output buffer for derived key
     /// \param dk_len Length of output buffer in bytes, must be positive
     /// \return true on success, false on invalid parameters
-    bool pbkdf2(Pbkdf2Hash prf,
+    HMAC_CPP_API bool pbkdf2(Pbkdf2Hash prf,
                 const void* password_ptr, size_t password_len,
                 const void* salt_ptr, size_t salt_len,
                 uint32_t iterations, uint8_t* out_ptr, size_t dk_len) noexcept;
@@ -292,7 +292,7 @@ namespace hmac_cpp {
     /// \param out_ptr Output buffer for derived key
     /// \param dk_len Length of output buffer in bytes, must be positive
     /// \return true on success, false on invalid parameters
-    bool pbkdf2_hmac_sha256(const void* password_ptr, size_t password_len,
+    HMAC_CPP_API bool pbkdf2_hmac_sha256(const void* password_ptr, size_t password_len,
                             const void* salt_ptr, size_t salt_len,
                             uint32_t iterations, uint8_t* out_ptr, size_t dk_len) noexcept;
 
@@ -359,7 +359,7 @@ namespace hmac_cpp {
     /// \param dk_len Desired length of the derived key in bytes, must be positive.
     /// \param prf Hash function to use (SHA1, SHA256, SHA512).
     /// \return Derived key as a vector of bytes.
-    std::vector<uint8_t> pbkdf2_with_pepper(
+    HMAC_CPP_API std::vector<uint8_t> pbkdf2_with_pepper(
             const void* password_ptr, size_t password_len,
             const void* salt_ptr, size_t salt_len,
             const void* pepper_ptr, size_t pepper_len,
@@ -438,7 +438,7 @@ namespace hmac_cpp {
     /// \param salt_ptr Pointer to optional salt buffer (may be null when salt_len is 0).
     /// \param salt_len Length of the salt in bytes.
     /// \return Pseudorandom key (PRK) as a byte vector.
-    std::vector<uint8_t> hkdf_extract_sha256(
+    HMAC_CPP_API std::vector<uint8_t> hkdf_extract_sha256(
             const void* ikm_ptr, size_t ikm_len,
             const void* salt_ptr, size_t salt_len);
 
@@ -459,7 +459,7 @@ namespace hmac_cpp {
     /// \param info_len Length of the info buffer in bytes.
     /// \param L Length of output keying material in bytes.
     /// \return Output keying material as a byte vector.
-    std::vector<uint8_t> hkdf_expand_sha256(
+    HMAC_CPP_API std::vector<uint8_t> hkdf_expand_sha256(
             const void* prk_ptr, size_t prk_len,
             const void* info_ptr, size_t info_len,
             size_t L);
@@ -510,13 +510,8 @@ namespace hmac_cpp {
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512). Default is SHA256
     /// \return Hex-encoded HMAC-SHA256 of the rounded time value
     /// \throws std::runtime_error if the system time cannot be retrieved
-    std::string generate_time_token(const std::vector<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
+    HMAC_CPP_API std::string generate_time_token(const std::vector<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
 
-    /// \brief Generate time token using secure buffer key.
-    /// \param key Secret key bytes.
-    /// \param interval_sec Token rotation interval in seconds.
-    /// \param hash_type Hash function to use.
-    /// \return Hex-encoded token.
     inline std::string generate_time_token(const secure_buffer<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
         return generate_time_token(std::vector<uint8_t>(key.begin(), key.end()), interval_sec, hash_type);
     }
@@ -539,14 +534,7 @@ namespace hmac_cpp {
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512). Default is SHA256
     /// \return true if the token is valid within the ±1 interval range; false otherwise
     /// \throws std::runtime_error if the system time cannot be retrieved
-    bool is_token_valid(const std::string &token, const std::vector<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
-
-    /// \brief Validate time token using secure buffer key.
-    /// \param token Token to validate.
-    /// \param key Secret key bytes.
-    /// \param interval_sec Token rotation interval in seconds.
-    /// \param hash_type Hash function to use.
-    /// \return true if token is valid.
+    HMAC_CPP_API bool is_token_valid(const std::string &token, const std::vector<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
     inline bool is_token_valid(const std::string &token, const secure_buffer<uint8_t>& key, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
         return is_token_valid(token, std::vector<uint8_t>(key.begin(), key.end()), interval_sec, hash_type);
     }
@@ -570,14 +558,8 @@ namespace hmac_cpp {
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512). Default is SHA256
     /// \return Hex-encoded HMAC-SHA256 of the concatenated timestamp and fingerprint
     /// \throws std::runtime_error if the system time cannot be retrieved
-    std::string generate_time_token(const std::vector<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
+    HMAC_CPP_API std::string generate_time_token(const std::vector<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
 
-    /// \brief Generate fingerprint-bound token using secure buffer key.
-    /// \param key Secret key bytes.
-    /// \param fingerprint Client identifier.
-    /// \param interval_sec Token rotation interval in seconds.
-    /// \param hash_type Hash function to use.
-    /// \return Hex-encoded token.
     inline std::string generate_time_token(const secure_buffer<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
         return generate_time_token(std::vector<uint8_t>(key.begin(), key.end()), fingerprint, interval_sec, hash_type);
     }
@@ -602,15 +584,8 @@ namespace hmac_cpp {
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512). Default is SHA256
     /// \return true if the token is valid within the ±1 interval range; false otherwise
     /// \throws std::runtime_error if the system time cannot be retrieved
-    bool is_token_valid(const std::string &token, const std::vector<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
+    HMAC_CPP_API bool is_token_valid(const std::string &token, const std::vector<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256);
 
-    /// \brief Validate fingerprint-bound token using secure buffer key.
-    /// \param token Token to validate.
-    /// \param key Secret key bytes.
-    /// \param fingerprint Client identifier.
-    /// \param interval_sec Token rotation interval in seconds.
-    /// \param hash_type Hash function to use.
-    /// \return true if token is valid.
     inline bool is_token_valid(const std::string &token, const secure_buffer<uint8_t>& key, const std::string &fingerprint, int interval_sec = 60, TypeHash hash_type = TypeHash::SHA256) {
         return is_token_valid(token, std::vector<uint8_t>(key.begin(), key.end()), fingerprint, interval_sec, hash_type);
     }
@@ -635,7 +610,7 @@ namespace hmac_cpp {
     /// \param digits Desired number of digits in the OTP (typically 6–8, max 9)
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512). Default is SHA1
     /// \return One-Time Password (OTP) as an integer in the range [0, 10^digits)
-    int get_hotp_code(const void* key_ptr, size_t key_len, uint64_t counter, int digits = 6, TypeHash hash_type = TypeHash::SHA1);
+    HMAC_CPP_API int get_hotp_code(const void* key_ptr, size_t key_len, uint64_t counter, int digits = 6, TypeHash hash_type = TypeHash::SHA1);
 
     /// \brief Computes HOTP code from a vector of bytes as key (RFC 4226)
     /// \tparam T Must be either `char` or `uint8_t`
@@ -679,7 +654,7 @@ namespace hmac_cpp {
         /// \param digits Desired number of digits in the OTP (1-9)
         /// \return One-Time Password (OTP) as an integer
         /// \throws std::runtime_error if the digest is too short for dynamic truncation
-        int hotp_from_digest(const std::vector<uint8_t>& hmac_result, int digits);
+        HMAC_CPP_API int hotp_from_digest(const std::vector<uint8_t>& hmac_result, int digits);
     }
     
     /// \brief Computes TOTP (Time-Based One-Time Password) code for a specific timestamp
@@ -692,7 +667,7 @@ namespace hmac_cpp {
     /// \param hash_type Hash function to use (SHA1, SHA256, SHA512; default: SHA1)
     /// \return TOTP code as an integer
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
-    int get_totp_code_at(
+    HMAC_CPP_API int get_totp_code_at(
             const void* key_ptr,
             size_t key_len,
             uint64_t  timestamp,
@@ -765,7 +740,7 @@ namespace hmac_cpp {
     /// \return TOTP code as an integer.
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9].
     /// \throws std::runtime_error if the system time cannot be retrieved.
-    int get_totp_code(
+    HMAC_CPP_API int get_totp_code(
             const void* key_ptr,
             size_t key_len,
             int period = 30,
@@ -822,7 +797,7 @@ namespace hmac_cpp {
     ///         The +1 step check is skipped when the computed counter equals
     ///         std::numeric_limits<uint64_t>::max().
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
-    bool is_totp_token_valid(
+    HMAC_CPP_API bool is_totp_token_valid(
             int token,
             const void* key_ptr,
             size_t key_len,
@@ -912,7 +887,7 @@ namespace hmac_cpp {
     ///         std::numeric_limits<uint64_t>::max().
     /// \throws std::invalid_argument if period <= 0 or digits not in [1,9]
     /// \throws std::runtime_error if the system time cannot be retrieved
-    bool is_totp_token_valid(
+    HMAC_CPP_API bool is_totp_token_valid(
             int token,
             const void* key_ptr,
             size_t key_len,
