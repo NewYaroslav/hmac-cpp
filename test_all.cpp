@@ -153,6 +153,71 @@ TEST(HMACTest, InvalidTypeThrowsString) {
     EXPECT_THROW(hmac::get_hmac(key, msg, invalid), std::invalid_argument);
 }
 
+TEST(HMACTest, RFC4231Vectors) {
+    struct Vector {
+        std::string key_hex;
+        std::string data_hex;
+        std::string sha256;
+        std::string sha512;
+        size_t truncate_to;
+    };
+
+    auto repeat = [](const std::string& pattern, size_t count) {
+        std::string s;
+        s.reserve(pattern.size() * count);
+        for (size_t i = 0; i < count; ++i) s += pattern;
+        return s;
+    };
+
+    std::vector<Vector> vectors = {
+        { repeat("0b", 20), "4869205468657265",
+          "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7",
+          "87aa7cdea5ef619d4ff0b4241a1d6cb02379f4e2ce4ec2787ad0b30545e17cdedaa833b7d6b8a702038b274eaea3f4e4be9d914eeb61f1702e696c203a126854",
+          0 },
+        { "4a656665",
+          "7768617420646f2079612077616e7420666f72206e6f7468696e673f",
+          "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843",
+          "164b7a7bfcf819e2e395fbe73b56e0a387bd64222e831fd610270cd7ea2505549758bf75c05a994a6d034f65f8f0e6fdcaeab1a34d4a6b4b636e070a38bce737",
+          0 },
+        { repeat("aa", 20), repeat("dd", 50),
+          "773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe",
+          "fa73b0089d56a284efb0f0756c890be9b1b5dbdd8ee81a3655f83e33b2279d39bf3e848279a722c806b485a47e67c807b946a337bee8942674278859e13292fb",
+          0 },
+        { "0102030405060708090a0b0c0d0e0f10111213141516171819", repeat("cd", 50),
+          "82558a389a443c0ea4cc819899f2083a85f0faa3e578f8077a2e3ff46729665b",
+          "b0ba465637458c6990e5a8c5f61d4af7e576d97ff94b872de76f8050361ee3dba91ca5c11aa25eb4d679275cc5788063a5f19741120c4f2de2adebeb10a298dd",
+          0 },
+        { repeat("0c", 20), "546573742057697468205472756e636174696f6e",
+          "a3b6167473100ee06e0c796c2955552b",
+          "415fad6271580a531d4179bc891d87a6",
+          16 },
+        { repeat("aa", 131), "54657374205573696e67204c6172676572205468616e20426c6f636b2d53697a65204b6579202d2048617368204b6579204669727374",
+          "60e431591ee0b67f0d8a26aacbf5b77f",
+          "80b24263c7c1a3ebb71493c1dd7be8b4",
+          16 },
+        { repeat("aa", 131),
+          "5468697320697320612074657374207573696e672061206c6172676572207468616e20626c6f636b2d73697a65206b657920616e642061206c6172676572207468616e20626c6f636b2d73697a6520646174612e20546865206b6579206e6565647320746f2062652068617368656420746f67657468657220616e64207468652064617461206e6565647320746f2062652068617368656420746f6765746865722e",
+          "aa2c6460ff60440a71a9bbb5c07ce5d6e6bee38e2921ed125b55696163532437",
+          "61466c9d01731984d7c3e9fa4e03beb5a793835c147b6350642a6e9a921c312b844925b7434e5e075c9c6643d48fd0bda27a9d1a7d0f0287fa0839aa6959bbe2",
+          0 }
+    };
+
+    for (size_t i = 0; i < vectors.size(); ++i) {
+        auto key = from_hex(vectors[i].key_hex);
+        auto data = from_hex(vectors[i].data_hex);
+        auto h256 = hmac::get_hmac(key, data, hmac::TypeHash::SHA256);
+        auto h512 = hmac::get_hmac(key, data, hmac::TypeHash::SHA512);
+        std::string h256_hex = hmac::to_hex(std::string(h256.begin(), h256.end()));
+        std::string h512_hex = hmac::to_hex(std::string(h512.begin(), h512.end()));
+        if (vectors[i].truncate_to) {
+            h256_hex = h256_hex.substr(0, vectors[i].truncate_to * 2);
+            h512_hex = h512_hex.substr(0, vectors[i].truncate_to * 2);
+        }
+        EXPECT_EQ(h256_hex, vectors[i].sha256) << "Case " << i + 1 << " SHA-256 mismatch";
+        EXPECT_EQ(h512_hex, vectors[i].sha512) << "Case " << i + 1 << " SHA-512 mismatch";
+    }
+}
+
 TEST(HOTPTest, ShortDigestThrows) {
     std::vector<uint8_t> short_digest = {0x00, 0x01, 0x02};
     EXPECT_THROW(hmac::detail::hotp_from_digest(short_digest, 6), std::runtime_error);
