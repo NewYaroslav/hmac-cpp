@@ -195,6 +195,11 @@ auto key  = hmac::pbkdf2_hmac_sha256(password, salt, iters, 32);
 ### 🕓 HOTP и TOTP токены
 
 Библиотека поддерживает генерацию одноразовых паролей по RFC 4226 и RFC 6238.
+Секрет передаётся в виде сырых байт. Если он задан в Base32 (часто в OTP URI),
+сначала декодируйте его.
+
+- **HOTP** — 6 цифр, SHA-1.
+- **TOTP** — период 30 с, 6 цифр, SHA-1. `is_totp_token_valid` допускает окно ±1 интервал.
 
 #### HOTP (HMAC-based One-Time Password)
 
@@ -205,6 +210,7 @@ std::string key = "12345678901234567890"; // raw key
 uint64_t counter = 0;
 int otp = get_hotp_code(key, counter); // по умолчанию: 6 цифр, SHA1
 std::cout << "HOTP: " << otp << std::endl;
+bool ok = (otp == 755224); // тестовый вектор RFC 4226
 ```
 
 #### TOTP (Time-based One-Time Password)
@@ -223,6 +229,14 @@ std::cout << "TOTP: " << otp << std::endl;
 uint64_t time_at = 1700000000;
 int otp = get_totp_code_at(key, time_at);
 ```
+
+Для проверки кода:
+
+```cpp
+bool valid = hmac::is_totp_token_valid(94287082, key, 59, 30, 8, hmac::TypeHash::SHA1); // тестовый вектор RFC 6238
+```
+
+Известные тестовые векторы: [RFC 4226, приложение D](https://www.rfc-editor.org/rfc/rfc4226#appendix-D) и [RFC 6238, приложение B](https://www.rfc-editor.org/rfc/rfc6238#appendix-B).
 
 ### 🕓 Временные токены на основе HMAC (Custom HMAC Time Tokens)
 
