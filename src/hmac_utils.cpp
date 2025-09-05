@@ -17,6 +17,74 @@ namespace hmac_cpp {
         return diff == 0;
     }
 
+    std::vector<uint8_t> pbkdf2(
+            const void* password_ptr, size_t password_len,
+            const void* salt_ptr, size_t salt_len,
+            int iterations, size_t dk_len,
+            TypeHash hash_type) {
+        if ((password_len > 0 && password_ptr == nullptr) ||
+            (salt_len > 0 && salt_ptr == nullptr))
+            throw std::invalid_argument("Null pointer with non-zero length");
+        if (iterations <= 0)
+            throw std::invalid_argument("PBKDF2: iterations must be positive");
+        if (dk_len == 0)
+            throw std::invalid_argument("PBKDF2: dk_len must be positive");
+
+        size_t hlen = 0;
+        switch (hash_type) {
+            case TypeHash::SHA1:
+                hlen = hmac_hash::SHA1::DIGEST_SIZE;
+                break;
+            case TypeHash::SHA256:
+                hlen = hmac_hash::SHA256::DIGEST_SIZE;
+                break;
+            case TypeHash::SHA512:
+                hlen = hmac_hash::SHA512::DIGEST_SIZE;
+                break;
+            default:
+                throw std::invalid_argument("Unsupported hash type");
+        }
+
+        size_t l = (dk_len + hlen - 1) / hlen;
+        size_t r = dk_len - (l - 1) * hlen;
+
+        std::vector<uint8_t> derived;
+        derived.reserve(dk_len);
+
+        std::vector<uint8_t> salt_block;
+        salt_block.reserve(salt_len + 4);
+        salt_block.insert(salt_block.end(),
+                          reinterpret_cast<const uint8_t*>(salt_ptr),
+                          reinterpret_cast<const uint8_t*>(salt_ptr) + salt_len);
+        salt_block.resize(salt_len + 4);
+
+        for (size_t i = 1; i <= l; ++i) {
+            salt_block[salt_len    ] = static_cast<uint8_t>((i >> 24) & 0xFF);
+            salt_block[salt_len + 1] = static_cast<uint8_t>((i >> 16) & 0xFF);
+            salt_block[salt_len + 2] = static_cast<uint8_t>((i >> 8) & 0xFF);
+            salt_block[salt_len + 3] = static_cast<uint8_t>(i & 0xFF);
+
+            std::vector<uint8_t> u = get_hmac(password_ptr, password_len,
+                                              salt_block.data(), salt_block.size(),
+                                              hash_type);
+            std::vector<uint8_t> t = u;
+            for (int j = 1; j < iterations; ++j) {
+                u = get_hmac(password_ptr, password_len,
+                              u.data(), u.size(), hash_type);
+                for (size_t k = 0; k < t.size(); ++k) {
+                    t[k] ^= u[k];
+                }
+            }
+            if (i == l) {
+                derived.insert(derived.end(), t.begin(), t.begin() + r);
+            } else {
+                derived.insert(derived.end(), t.begin(), t.end());
+            }
+        }
+
+        return derived;
+    }
+
     std::string generate_time_token(const std::string &key, int interval_sec, TypeHash hash_type) {
         if (interval_sec <= 0) {
             throw std::invalid_argument("interval_sec must be positive");
