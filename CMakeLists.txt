@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(hmac_cpp VERSION 0.1.0 LANGUAGES CXX)
+project(hmac_cpp VERSION 0.2.0 LANGUAGES CXX)
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 11)
