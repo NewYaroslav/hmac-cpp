@@ -4,8 +4,8 @@
 #include <string>
 
 // stream large files in chunks and verify
-#include "hmac_cpp/hmac.hpp"
-#include "hmac_cpp/hmac_utils.hpp"
+#include <hmac_cpp/hmac.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 int main() {
     const std::string key = "supersecret";

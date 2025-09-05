@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "hmac_cpp/hmac.hpp"
-#include "hmac_cpp/hmac_utils.hpp"
+#include <hmac_cpp/hmac.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 static std::vector<uint8_t> from_hex(const std::string& hex) {
     std::vector<uint8_t> out;
