@@ -78,6 +78,13 @@ Alternatively, use the helper script:
 scripts/run_tests.sh
 ```
 
+## Test Vectors
+
+[![Linux](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Linux.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Linux.yml)
+[![Windows](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Win.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-Win.yml)
+
+The test suite covers official vectors from [RFC&nbsp;4231](https://www.rfc-editor.org/rfc/rfc4231) and [RFC&nbsp;6070](https://www.rfc-editor.org/rfc/rfc6070) and runs in CI.
+
 ## 📦 MQL5 Compatibility
 
 The repository includes `sha256.mqh`, `sha512.mqh`, `hmac.mqh`, and `hmac_utils.mqh` files, fully compatible with `MetaTrader 5`.
@@ -199,6 +206,22 @@ Parameters:
 For deployments with a server-side *pepper*, use `pbkdf2_with_pepper(password, salt, pepper, iters, dkLen)`.
 The pepper is a secret key stored separately from the hashed password.
 
+#### PBKDF2-HMAC-SHA256 + AES-GCM
+
+```cpp
+#include <hmac_cpp/hmac_utils.hpp>
+#include <aes_cpp/aes_utils.hpp>
+
+std::string password = "correct horse battery staple";
+std::vector<uint8_t> salt(16, 0x00); // 16 random bytes
+auto key = hmac::pbkdf2(password, salt, 100000, 32, hmac::Pbkdf2Hash::Sha256);
+
+std::string plaintext = "secret";
+std::vector<uint8_t> aad = {'h','e','a','d','e','r'};
+auto pkt = aes_cpp::utils::encrypt_gcm(plaintext, key, aad);
+auto restored = aes_cpp::utils::decrypt_gcm_to_string(pkt, key, aad);
+```
+
 ### HKDF (RFC 5869)
 
 ```cpp
@@ -303,6 +326,12 @@ int main() {
 
 **Note:** avoid checking input lengths before calling `constant_time_equal`.
 Early length comparisons can leak information through timing side channels.
+
+## Security Notes
+
+- PBKDF2 is CPU-bound and vulnerable to massive GPU/ASIC brute force. Choose high iteration counts or stronger KDFs.
+- Every password requires a unique, random salt of sufficient length.
+- Salts, iteration counts, and algorithms are not secrets—store them alongside the hash for verification.
 
 ## 📚 Resources
 
