@@ -39,7 +39,10 @@ int main() {
     print_section("HMAC-SHA256");
     std::string hmac_sha256 = hmac::get_hmac(key, input, hmac::TypeHash::SHA256, true);
     std::cout << "HMAC('" << key << "', '" << input << "', SHA256) = " << hmac_sha256 << std::endl;
-    std::cout << "Expected: 7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca\n\n";
+    std::string expected_hmac_sha256 =
+            "7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca";
+    bool mac_valid = hmac::constant_time_equal(hmac_sha256, expected_hmac_sha256);
+    std::cout << "MAC valid? = " << (mac_valid ? "YES" : "NO") << "\n\n";
 
     // HMAC-SHA512
     print_section("HMAC-SHA512");

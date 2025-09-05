@@ -28,6 +28,23 @@ namespace hmac_cpp {
                                     reinterpret_cast<const uint8_t*>(b.data()), b.size());
     }
 
+    /// \brief Alias for constant_time_equals.
+    ///        Avoids early length checks to mitigate timing attacks.
+    inline bool constant_time_equal(const uint8_t* a, size_t a_len,
+                                    const uint8_t* b, size_t b_len) {
+        return constant_time_equals(a, a_len, b, b_len);
+    }
+
+    inline bool constant_time_equal(const std::vector<uint8_t>& a,
+                                    const std::vector<uint8_t>& b) {
+        return constant_time_equal(a.data(), a.size(), b.data(), b.size());
+    }
+
+    inline bool constant_time_equal(const std::string& a, const std::string& b) {
+        return constant_time_equal(reinterpret_cast<const uint8_t*>(a.data()), a.size(),
+                                   reinterpret_cast<const uint8_t*>(b.data()), b.size());
+    }
+
     /// \brief Hash choices for PBKDF2
     enum class Pbkdf2Hash { Sha1, Sha256, Sha512 };
 
