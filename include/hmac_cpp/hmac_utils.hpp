@@ -53,13 +53,20 @@ namespace hmac_cpp {
 
     /// \brief Hash choices for PBKDF2
     enum class Pbkdf2Hash { Sha1, Sha256, Sha512 };
-
+  
     /// PBKDF2 Security Notes:
     /// - Use a random salt of at least 16 bytes and never reuse it.
     /// - Choose iterations so the derivation takes about 200–500 ms on 2025 hardware.
     /// - Store {salt, iterations} with the ciphertext or hash; these values are public.
     /// - Salts and iteration counts must be unique per password.
     /// - Example serialization: {magic|ver|prf|salt|iters|dkLen|…}.
+
+    /// \brief
+  struct Pbkdf2Result {
+        std::vector<uint8_t> salt;
+        uint32_t iters;
+        std::vector<uint8_t> key;
+    };
 
     /// \brief Derives a key from a password using PBKDF2 (RFC 8018)
     /// \param password_ptr Pointer to the password buffer
@@ -111,6 +118,39 @@ namespace hmac_cpp {
         return pbkdf2(password.data(), password.size(),
                       salt.data(), salt.size(),
                       iterations, dk_len, prf);
+    }
+
+    template<typename T>
+    inline Pbkdf2Result pbkdf2(
+            const std::vector<T>& password,
+            const Pbkdf2Result& params,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
+        static_assert(std::is_same<T, char>::value || std::is_same<T, uint8_t>::value,
+                      "pbkdf2(vector<T>) supports only char or uint8_t");
+        auto key = pbkdf2(password.data(), password.size(),
+                          params.salt.data(), params.salt.size(),
+                          params.iters, params.key.size(), prf);
+        return {params.salt, params.iters, std::move(key)};
+    }
+
+    inline Pbkdf2Result pbkdf2(
+            const std::string& password,
+            const Pbkdf2Result& params,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
+        auto key = pbkdf2(password.data(), password.size(),
+                          params.salt.data(), params.salt.size(),
+                          params.iters, params.key.size(), prf);
+        return {params.salt, params.iters, std::move(key)};
+    }
+
+    inline Pbkdf2Result pbkdf2(
+            const secure_buffer<uint8_t>& password,
+            const Pbkdf2Result& params,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256) {
+        auto key = pbkdf2(password.data(), password.size(),
+                          params.salt.data(), params.salt.size(),
+                          params.iters, params.key.size(), prf);
+        return {params.salt, params.iters, std::move(key)};
     }
 
     /// \brief Derives PBKDF2 into caller-provided buffer using selected hash.
