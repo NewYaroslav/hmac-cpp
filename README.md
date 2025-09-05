@@ -334,6 +334,14 @@ int main() {
 **Note:** avoid checking input lengths before calling `constant_time_equal`.
 Early length comparisons can leak information through timing side channels.
 
+## PBKDF2 Recommended Parameters
+
+| Target  | Iterations | Derived key length | PRF |
+|---------|-----------:|------------------:|-----|
+| Desktop | 600000     | 32 bytes          | HMAC-SHA256 |
+| Laptop  | 300000     | 32 bytes          | HMAC-SHA256 |
+| Mobile  | 150000     | 32 bytes          | HMAC-SHA256 |
+
 ## Security Notes
 
 - PBKDF2 is CPU-bound and vulnerable to massive GPU/ASIC brute force. Choose high iteration counts or stronger KDFs.
