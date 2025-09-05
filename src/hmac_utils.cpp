@@ -40,6 +40,8 @@ namespace hmac_cpp {
             throw std::invalid_argument("Null pointer with non-zero length");
         if (iterations < 1)
             throw std::invalid_argument("PBKDF2: iterations must be >= 1");
+        if (iterations > MAX_PBKDF2_ITERATIONS)
+            throw std::invalid_argument("PBKDF2: iterations too large");
         if (dk_len == 0)
             throw std::invalid_argument("PBKDF2: dk_len must be positive");
         if (salt_len < 16)
@@ -115,7 +117,8 @@ namespace hmac_cpp {
             (salt_len > 0 && salt_ptr == nullptr) ||
             out_ptr == nullptr)
             return false;
-        if (iterations < 1 || dk_len == 0 || salt_len < 16)
+        if (iterations < 1 || dk_len == 0 || salt_len < 16 ||
+            iterations > MAX_PBKDF2_ITERATIONS)
             return false;
 
         const size_t hlen = hmac_hash::SHA256::DIGEST_SIZE;
