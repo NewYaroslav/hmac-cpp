@@ -50,6 +50,36 @@ namespace hmac_cpp {
         return get_hash(input.data(), input.size(), type);
     }
 
+    /// \brief Streaming HMAC computation context.
+    class HmacContext {
+    public:
+        explicit HmacContext(TypeHash type) : type_(type), block_size_(0), digest_size_(0) {}
+
+        /// \brief Initializes the context with a secret key.
+        /// \param key_ptr Pointer to the key buffer; must be non-null if key_len > 0
+        /// \param key_len Length of the key in bytes
+        void init(const void* key_ptr, size_t key_len);
+
+        /// \brief Updates the HMAC with message data.
+        /// \param data_ptr Pointer to the message buffer; must be non-null if data_len > 0
+        /// \param data_len Length of the message in bytes
+        void update(const void* data_ptr, size_t data_len);
+
+        /// \brief Finalizes the HMAC and writes the result to the provided buffer.
+        /// \param out_ptr Output buffer for the HMAC result
+        /// \param out_len Length of the output buffer; must be at least the digest size
+        void final(uint8_t* out_ptr, size_t out_len);
+
+    private:
+        TypeHash type_;
+        size_t block_size_;
+        size_t digest_size_;
+        secure_buffer<uint8_t> okeypad_;
+        hmac_hash::SHA1 sha1_;
+        hmac_hash::SHA256 sha256_;
+        hmac_hash::SHA512 sha512_;
+    };
+
     /// \brief Computes HMAC for raw binary data using the specified hash function.
     /// \param key_ptr Pointer to the key buffer; must be non-null if key_len > 0
     /// \param key_len Length of the key in bytes
