@@ -86,6 +86,126 @@ namespace hmac_cpp {
         }
     }
 
+    void HmacContext::init(const void* key_ptr, size_t key_len) {
+        if (key_len > 0 && key_ptr == nullptr)
+            throw std::invalid_argument("Null key with non-zero length");
+
+        switch (type_) {
+            case TypeHash::SHA1:
+                block_size_ = hmac_hash::SHA1::BLOCK_SIZE;
+                digest_size_ = hmac_hash::SHA1::DIGEST_SIZE;
+                break;
+            case TypeHash::SHA256:
+                block_size_ = hmac_hash::SHA256::SHA224_256_BLOCK_SIZE;
+                digest_size_ = hmac_hash::SHA256::DIGEST_SIZE;
+                break;
+            case TypeHash::SHA512:
+                block_size_ = hmac_hash::SHA512::SHA384_512_BLOCK_SIZE;
+                digest_size_ = hmac_hash::SHA512::DIGEST_SIZE;
+                break;
+            default:
+                throw std::invalid_argument("Unsupported hash type");
+        }
+
+        secure_buffer<uint8_t> key(block_size_);
+        if (key_len > block_size_) {
+            auto hashed = get_hash(key_ptr, key_len, type_);
+            std::copy(hashed.begin(), hashed.end(), key.begin());
+            if (hashed.size() < block_size_)
+                std::fill(key.begin() + hashed.size(), key.end(), 0);
+            secure_zero(hashed.data(), hashed.size());
+        } else {
+            if (key_len > 0)
+                std::memcpy(key.data(), key_ptr, key_len);
+            if (key_len < block_size_)
+                std::fill(key.begin() + key_len, key.end(), 0);
+        }
+
+        okeypad_ = secure_buffer<uint8_t>(block_size_);
+        secure_buffer<uint8_t> ipad(block_size_);
+        for (size_t i = 0; i < block_size_; ++i) {
+            const uint8_t k = key[i];
+            ipad[i] = k ^ 0x36;
+            okeypad_[i] = k ^ 0x5c;
+        }
+
+        switch (type_) {
+            case TypeHash::SHA1:
+                sha1_.init();
+                sha1_.update(ipad.data(), block_size_);
+                break;
+            case TypeHash::SHA256:
+                sha256_.init();
+                sha256_.update(ipad.data(), block_size_);
+                break;
+            case TypeHash::SHA512:
+                sha512_.init();
+                sha512_.update(ipad.data(), block_size_);
+                break;
+            default:
+                throw std::invalid_argument("Unsupported hash type");
+        }
+
+        secure_zero(key.data(), key.size());
+        secure_zero(ipad.data(), ipad.size());
+    }
+
+    void HmacContext::update(const void* data_ptr, size_t data_len) {
+        if (data_len > 0 && data_ptr == nullptr)
+            throw std::invalid_argument("Null data pointer with non-zero length");
+        const uint8_t* p = static_cast<const uint8_t*>(data_ptr);
+        switch (type_) {
+            case TypeHash::SHA1:
+                sha1_.update(p, data_len);
+                break;
+            case TypeHash::SHA256:
+                sha256_.update(p, data_len);
+                break;
+            case TypeHash::SHA512:
+                sha512_.update(p, data_len);
+                break;
+            default:
+                throw std::invalid_argument("Unsupported hash type");
+        }
+    }
+
+    void HmacContext::final(uint8_t* out_ptr, size_t out_len) {
+        if (out_ptr == nullptr)
+            throw std::invalid_argument("Null output pointer");
+        if (out_len < digest_size_)
+            throw std::invalid_argument("Output buffer too small");
+
+        secure_buffer<uint8_t> inner(digest_size_);
+
+        switch (type_) {
+            case TypeHash::SHA1:
+                sha1_.finish(inner.data());
+                sha1_.init();
+                sha1_.update(okeypad_.data(), block_size_);
+                sha1_.update(inner.data(), digest_size_);
+                sha1_.finish(out_ptr);
+                break;
+            case TypeHash::SHA256:
+                sha256_.finish(inner.data());
+                sha256_.init();
+                sha256_.update(okeypad_.data(), block_size_);
+                sha256_.update(inner.data(), digest_size_);
+                sha256_.finish(out_ptr);
+                break;
+            case TypeHash::SHA512:
+                sha512_.finish(inner.data());
+                sha512_.init();
+                sha512_.update(okeypad_.data(), block_size_);
+                sha512_.update(inner.data(), digest_size_);
+                sha512_.finish(out_ptr);
+                break;
+            default:
+                throw std::invalid_argument("Unsupported hash type");
+        }
+
+        secure_zero(inner.data(), inner.size());
+    }
+
     std::vector<uint8_t> get_hmac(const void* key_ptr, size_t key_len, const void* msg_ptr, size_t msg_len, TypeHash type) {
         if ((key_len > 0 && key_ptr == nullptr) || (msg_len > 0 && msg_ptr == nullptr))
             throw std::invalid_argument("Null pointer with non-zero length");

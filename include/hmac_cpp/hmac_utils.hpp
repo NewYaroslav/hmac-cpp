@@ -106,6 +106,55 @@ namespace hmac_cpp {
                       iterations, dk_len, prf);
     }
 
+    /// \brief Derives PBKDF2 into caller-provided buffer using selected hash.
+    /// \param prf Hash function to use (SHA1, SHA256, SHA512)
+    /// \param password_ptr Pointer to the password buffer
+    /// \param password_len Length of the password in bytes
+    /// \param salt_ptr Pointer to the salt buffer
+    /// \param salt_len Length of the salt in bytes
+    /// \param iterations Number of iterations, must be positive
+    /// \param out_ptr Output buffer for derived key
+    /// \param dk_len Length of output buffer in bytes, must be positive
+    /// \return true on success, false on invalid parameters
+    bool pbkdf2(Pbkdf2Hash prf,
+                const void* password_ptr, size_t password_len,
+                const void* salt_ptr, size_t salt_len,
+                uint32_t iterations, uint8_t* out_ptr, size_t dk_len) noexcept;
+
+    /// \deprecated Use overloads that accept std::vector<uint8_t> or secure_buffer.
+    template<size_t N>
+    HMACCPP_DEPRECATED("use std::vector<uint8_t> or secure_buffer overload")
+    inline bool pbkdf2(Pbkdf2Hash prf,
+                       const std::string& password,
+                       const std::string& salt,
+                       uint32_t iterations,
+                       std::array<uint8_t, N>& out) noexcept {
+        return pbkdf2(prf, password.data(), password.size(),
+                      salt.data(), salt.size(),
+                      iterations, out.data(), out.size());
+    }
+
+    inline bool pbkdf2(Pbkdf2Hash prf,
+                       const secure_buffer<uint8_t>& password,
+                       const secure_buffer<uint8_t>& salt,
+                       uint32_t iterations,
+                       uint8_t* out_ptr, size_t dk_len) noexcept {
+        return pbkdf2(prf, password.data(), password.size(),
+                      salt.data(), salt.size(),
+                      iterations, out_ptr, dk_len);
+    }
+
+    template<size_t N>
+    inline bool pbkdf2(Pbkdf2Hash prf,
+                       const secure_buffer<uint8_t>& password,
+                       const secure_buffer<uint8_t>& salt,
+                       uint32_t iterations,
+                       std::array<uint8_t, N>& out) noexcept {
+        return pbkdf2(prf, password.data(), password.size(),
+                      salt.data(), salt.size(),
+                      iterations, out.data(), out.size());
+    }
+
     /// \brief Derives PBKDF2-HMAC-SHA256 into caller-provided buffer
     /// \param password_ptr Pointer to the password buffer
     /// \param password_len Length of the password in bytes

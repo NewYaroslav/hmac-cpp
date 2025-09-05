@@ -110,9 +110,10 @@ namespace hmac_cpp {
         return derived;
     }
 
-    bool pbkdf2_hmac_sha256(const void* password_ptr, size_t password_len,
-                            const void* salt_ptr, size_t salt_len,
-                            uint32_t iterations, uint8_t* out_ptr, size_t dk_len) noexcept {
+    bool pbkdf2(Pbkdf2Hash prf,
+                const void* password_ptr, size_t password_len,
+                const void* salt_ptr, size_t salt_len,
+                uint32_t iterations, uint8_t* out_ptr, size_t dk_len) noexcept {
         if ((password_len > 0 && password_ptr == nullptr) ||
             (salt_len > 0 && salt_ptr == nullptr) ||
             out_ptr == nullptr)
@@ -121,7 +122,22 @@ namespace hmac_cpp {
             iterations > MAX_PBKDF2_ITERATIONS)
             return false;
 
-        const size_t hlen = hmac_hash::SHA256::DIGEST_SIZE;
+        TypeHash hash_type = to_type_hash(prf);
+        size_t hlen = 0;
+        switch (hash_type) {
+            case TypeHash::SHA1:
+                hlen = hmac_hash::SHA1::DIGEST_SIZE;
+                break;
+            case TypeHash::SHA256:
+                hlen = hmac_hash::SHA256::DIGEST_SIZE;
+                break;
+            case TypeHash::SHA512:
+                hlen = hmac_hash::SHA512::DIGEST_SIZE;
+                break;
+            default:
+                return false;
+        }
+
         uint64_t max_dk = (static_cast<uint64_t>(1) << 32) - 1;
         max_dk *= hlen;
         if (dk_len > max_dk)
@@ -144,25 +160,42 @@ namespace hmac_cpp {
             salt_block[salt_len + 2] = static_cast<uint8_t>((i >> 8) & 0xFF);
             salt_block[salt_len + 3] = static_cast<uint8_t>(i & 0xFF);
 
-            secure_buffer<uint8_t> u(std::move(get_hmac(password_ptr, password_len,
-                                                         salt_block.data(), salt_block.size(),
-                                                         TypeHash::SHA256)));
-            secure_buffer<uint8_t> t = u;
+            secure_buffer<uint8_t> u(hlen);
+            secure_buffer<uint8_t> t(hlen);
+            HmacContext ctx(hash_type);
+            ctx.init(password_ptr, password_len);
+            ctx.update(salt_block.data(), salt_block.size());
+            ctx.final(u.data(), hlen);
+            std::memcpy(t.data(), u.data(), hlen);
+
             for (uint32_t j = 1; j < iterations; ++j) {
-                u = secure_buffer<uint8_t>(get_hmac(password_ptr, password_len,
-                                                    u.data(), u.size(), TypeHash::SHA256));
-                for (size_t k = 0; k < t.size(); ++k) {
+                ctx.init(password_ptr, password_len);
+                ctx.update(u.data(), hlen);
+                ctx.final(u.data(), hlen);
+                for (size_t k = 0; k < hlen; ++k) {
                     t[k] ^= u[k];
                 }
             }
+
             size_t take = (i == l) ? r : hlen;
             std::memcpy(out_ptr + pos, t.data(), take);
             pos += take;
+
             secure_zero(u.data(), u.size());
             secure_zero(t.data(), t.size());
         }
+
         secure_zero(salt_block.data(), salt_block.size());
         return true;
+    }
+
+    bool pbkdf2_hmac_sha256(const void* password_ptr, size_t password_len,
+                            const void* salt_ptr, size_t salt_len,
+                            uint32_t iterations, uint8_t* out_ptr, size_t dk_len) noexcept {
+        return pbkdf2(Pbkdf2Hash::Sha256,
+                      password_ptr, password_len,
+                      salt_ptr, salt_len,
+                      iterations, out_ptr, dk_len);
     }
 
     std::vector<uint8_t> pbkdf2_with_pepper(

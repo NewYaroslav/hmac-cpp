@@ -371,6 +371,17 @@ TEST(PBKDF2BufferApiTest, SHA256ArrayOutput) {
     EXPECT_TRUE(std::equal(out.begin(), out.end(), ref.begin()));
 }
 
+TEST(PBKDF2BufferApiTest, GenericArrayOutput) {
+    auto salt = from_hex("000102030405060708090a0b0c0d0e0f");
+    std::string salt_str(salt.begin(), salt.end());
+    std::array<uint8_t,32> out{};
+    ASSERT_TRUE(hmac::pbkdf2(hmac::Pbkdf2Hash::Sha256,
+                             std::string("password"), salt_str, 2, out));
+    std::vector<uint8_t> ref(32);
+    ASSERT_TRUE(PKCS5_PBKDF2_HMAC("password", 8, salt.data(), salt.size(), 2, EVP_sha256(), ref.size(), ref.data()));
+    EXPECT_TRUE(std::equal(out.begin(), out.end(), ref.begin()));
+}
+
 TEST(PBKDF2BufferApiTest, IterationsLimit) {
     std::string salt(16, 'a');
     std::array<uint8_t,32> out{};
