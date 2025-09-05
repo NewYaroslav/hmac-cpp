@@ -21,6 +21,11 @@ namespace hmac_cpp {
         return diff == 0;
     }
 
+    bool constant_time_equal(const uint8_t* a, size_t a_len,
+                             const uint8_t* b, size_t b_len) {
+        return constant_time_equals(a, a_len, b, b_len);
+    }
+
     static TypeHash to_type_hash(Pbkdf2Hash prf) {
         switch (prf) {
             case Pbkdf2Hash::Sha1: return TypeHash::SHA1;

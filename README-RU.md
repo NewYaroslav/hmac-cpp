@@ -112,6 +112,13 @@ auto sig = hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
 secure_zero(key); // при необходимости: очистить после использования
 ```
 
+Чтобы сравнить два токена напрямую, используйте
+`hmac::constant_time_equal` для защиты от атак по времени:
+
+```cpp
+bool same = hmac::constant_time_equal(expected_token, user_token); // длины публичны
+```
+
 ### HMAC (сырые бинарные данные)
 
 ```cpp
@@ -285,20 +292,26 @@ try {
 ```cpp
 #include <iostream>
 #include <hmac_cpp/hmac.hpp>
+#include <hmac_cpp/hmac_utils.hpp>
 
 int main() {
     std::string input = "grape";
     std::string key = "12345";
 
-    std::string hmac_sha256 = hmac::get_hmac(key, input, hmac::TypeHash::SHA256);
-    std::cout << "HMAC-SHA256: " << hmac_sha256 << std::endl;
-
-    std::string hmac_sha512 = hmac::get_hmac(key, input, hmac::TypeHash::SHA512);
-    std::cout << "HMAC-SHA512: " << hmac_sha512 << std::endl;
+    std::string mac = hmac::get_hmac(key, input, hmac::TypeHash::SHA256);
+    if (hmac::constant_time_equal(mac,
+            "7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca")) {
+        std::cout << "MAC проверен\n";
+    }
 
     return 0;
 }
 ```
+
+**Примечание:** `constant_time_equal` считает длину входных данных публичной и
+время работы зависит от максимальной длины. Не проверяйте длины отдельно —
+ранние проверки могут выдать информацию через побочные каналы времени
+выполнения.
 
 ## 📚 Полезные ссылки
 

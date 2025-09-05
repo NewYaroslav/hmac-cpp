@@ -141,6 +141,13 @@ std::vector<uint8_t> sig =
 secure_zero(key); // optional: wipe after use
 ```
 
+To compare two tokens directly, use `hmac::constant_time_equal` for a
+timing-safe check:
+
+```cpp
+bool same = hmac::constant_time_equal(expected_token, user_token); // lengths are public
+```
+
 ### HMAC (binary data: raw buffer)
 
 ```cpp
@@ -344,8 +351,9 @@ int main() {
 }
 ```
 
-**Note:** avoid checking input lengths before calling `constant_time_equal`.
-Early length comparisons can leak information through timing side channels.
+**Note:** `constant_time_equal` treats input lengths as public and may run
+longer for longer inputs. Avoid checking lengths separately—early length
+comparisons can leak information through timing side channels.
 
 ## 📚 Resources
 

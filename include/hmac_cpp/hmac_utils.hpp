@@ -24,6 +24,17 @@ namespace hmac_cpp {
     HMAC_CPP_API bool constant_time_equals(const uint8_t* a, size_t a_len,
                               const uint8_t* b, size_t b_len);
 
+    /// \brief Alias for \c constant_time_equals.
+    /// \param a Pointer to first array.
+    /// \param a_len Length of the first array.
+    /// \param b Pointer to second array.
+    /// \param b_len Length of the second array.
+    /// \return true if both arrays are equal.
+    /// \note Avoids early length checks; input lengths are treated as public
+    ///       and may influence timing.
+    HMAC_CPP_API bool constant_time_equal(const uint8_t* a, size_t a_len,
+                                          const uint8_t* b, size_t b_len);
+
     /// \brief Compare vectors in constant time.
     /// \param a First vector.
     /// \param b Second vector.
@@ -42,19 +53,7 @@ namespace hmac_cpp {
                                     reinterpret_cast<const uint8_t*>(b.data()), b.size());
     }
 
-    /// \brief Alias for constant_time_equals.
-    /// \param a Pointer to first array.
-    /// \param a_len Length of the first array.
-    /// \param b Pointer to second array.
-    /// \param b_len Length of the second array.
-    /// \return true if both arrays are equal.
-    /// \note Avoids early length checks to mitigate timing attacks.
-    inline bool constant_time_equal(const uint8_t* a, size_t a_len,
-                                    const uint8_t* b, size_t b_len) {
-        return constant_time_equals(a, a_len, b, b_len);
-    }
-
-    /// \brief Alias for constant_time_equals on vectors.
+    /// \brief Alias for \c constant_time_equal on vectors.
     /// \param a First vector.
     /// \param b Second vector.
     /// \return true if both vectors are equal.
@@ -63,7 +62,7 @@ namespace hmac_cpp {
         return constant_time_equal(a.data(), a.size(), b.data(), b.size());
     }
 
-    /// \brief Alias for constant_time_equals on strings.
+    /// \brief Alias for \c constant_time_equal on strings.
     /// \param a First string.
     /// \param b Second string.
     /// \return true if both strings are equal.
