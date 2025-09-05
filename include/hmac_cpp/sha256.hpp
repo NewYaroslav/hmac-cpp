@@ -46,11 +46,12 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include "api.hpp"
 
 namespace hmac_hash {
 
     /// \brief Class for computing SHA256 hash
-    class SHA256 {
+    class HMAC_CPP_API SHA256 {
     protected:
         const static uint32_t sha256_k[];
 
@@ -83,18 +84,18 @@ namespace hmac_hash {
     /// \param data Pointer to input data
     /// \param length Length of the input data
     /// \param digest Output buffer of size SHA256::DIGEST_SIZE
-    void sha256(const void* data, size_t length, uint8_t* digest);
+    HMAC_CPP_API void sha256(const void* data, size_t length, uint8_t* digest);
 
     /// \brief Computes SHA256 hash of a raw byte buffer
     /// \param data Pointer to input data
     /// \param length Length of the input data
     /// \return Vector containing the SHA256 digest
-    std::vector<uint8_t> sha256(const void* data, size_t length);
+    HMAC_CPP_API std::vector<uint8_t> sha256(const void* data, size_t length);
     
     /// \brief Computes SHA256 hash of a string
     /// \param input Input string
     /// \return Hash as a binary string
-    std::string sha256(const std::string &input);
+    HMAC_CPP_API std::string sha256(const std::string &input);
     
     /// \brief Computes SHA256 hash of a vector of bytes
     /// \tparam T Type of the vector element (char or uint8_t)
