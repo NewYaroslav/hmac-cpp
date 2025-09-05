@@ -281,14 +281,21 @@ The library also includes a **lightweight implementation of time-based HMAC toke
 #include <hmac_cpp/hmac_utils.hpp>
 
 std::string token = hmac::generate_time_token(secret_key, 60);
-bool is_valid = hmac::is_token_valid(token, secret_key, 60);
+bool is_valid = hmac::is_token_valid(user_token, secret_key, 60);
 ```
 
 You can also bind the token to a *client fingerprint*:
 
 ```cpp
 std::string token = hmac::generate_time_token(secret_key, fingerprint, 60);
-bool is_valid = hmac::is_token_valid(token, secret_key, fingerprint, 60);
+bool is_valid = hmac::is_token_valid(user_token, secret_key, fingerprint, 60);
+```
+
+To compare two tokens directly, use `hmac::constant_time_equal` for a
+timing-safe check:
+
+```cpp
+bool same = hmac::constant_time_equal(expected_token, user_token); // lengths are public
 ```
 
 If `interval_sec` is not positive, the functions throw `std::invalid_argument`:
@@ -326,8 +333,9 @@ int main() {
 }
 ```
 
-**Note:** avoid checking input lengths before calling `constant_time_equal`.
-Early length comparisons can leak information through timing side channels.
+**Note:** `constant_time_equal` treats input lengths as public and may run
+longer for longer inputs. Avoid checking lengths separately—early length
+comparisons can leak information through timing side channels.
 
 ## 📚 Resources
 
