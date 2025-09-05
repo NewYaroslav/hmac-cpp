@@ -54,6 +54,8 @@ _install/
         └── libhmac_cpp.a
 ```
 
+Include headers in your code as `<hmac_cpp/...>`
+
 Predefined `.bat` scripts for MinGW builds are also available: `build_*.bat`.
 
 After installation, the package can be found and linked in other projects using `find_package`:
