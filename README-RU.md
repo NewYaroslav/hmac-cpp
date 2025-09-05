@@ -112,6 +112,13 @@ auto sig = hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
 secure_zero(key); // при необходимости: очистить после использования
 ```
 
+Чтобы сравнить два токена напрямую, используйте
+`hmac::constant_time_equal` для защиты от атак по времени:
+
+```cpp
+bool same = hmac::constant_time_equal(expected_token, user_token); // длины публичны
+```
+
 ### HMAC (сырые бинарные данные)
 
 ```cpp
@@ -240,21 +247,14 @@ int otp = get_totp_code_at(key, time_at);
 #include <hmac_cpp/hmac_utils.hpp>
 
 std::string token = hmac::generate_time_token(secret_key, 60);
-bool is_valid = hmac::is_token_valid(user_token, secret_key, 60);
+bool is_valid = hmac::is_token_valid(token, secret_key, 60);
 ```
 
 Также можно привязать токен к *отпечатку клиента* (fingerprint):
 
 ```cpp
 std::string token = hmac::generate_time_token(secret_key, fingerprint, 60);
-bool is_valid = hmac::is_token_valid(user_token, secret_key, fingerprint, 60);
-```
-
-Чтобы сравнить два токена напрямую, используйте
-`hmac::constant_time_equal` для защиты от атак по времени:
-
-```cpp
-bool same = hmac::constant_time_equal(expected_token, user_token); // длины публичны
+bool is_valid = hmac::is_token_valid(token, secret_key, fingerprint, 60);
 ```
 
 Если `interval_sec` неположителен, функции выбросят `std::invalid_argument`:
