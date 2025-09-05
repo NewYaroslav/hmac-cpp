@@ -200,6 +200,22 @@ TEST(TokenBoundaryFingerprintTest, MinTime) {
     EXPECT_TRUE(hmac::is_token_valid(token_next, key, fingerprint, interval));
 }
 
+TEST(PBKDF2Test, SHA1) {
+    const std::string password = "password";
+    const std::string salt = "salt";
+    std::vector<uint8_t> dk = hmac::pbkdf2(password, salt, 2, 20, hmac::TypeHash::SHA1);
+    std::string hex = hmac::to_hex(std::string(dk.begin(), dk.end()));
+    EXPECT_EQ(hex, "ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957");
+}
+
+TEST(PBKDF2Test, SHA256) {
+    const std::string password = "password";
+    const std::string salt = "salt";
+    std::vector<uint8_t> dk = hmac::pbkdf2(password, salt, 2, 32, hmac::TypeHash::SHA256);
+    std::string hex = hmac::to_hex(std::string(dk.begin(), dk.end()));
+    EXPECT_EQ(hex, "ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43");
+}
+
 TEST(TimeErrorTest, MinusOneNoErrno) {
     const std::string key = "12345";
     mock_time_value = static_cast<std::time_t>(-1);

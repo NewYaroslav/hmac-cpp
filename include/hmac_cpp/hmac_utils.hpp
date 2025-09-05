@@ -13,6 +13,46 @@ namespace hmac_cpp {
     /// \return true if both strings are equal
     bool constant_time_equals(const std::string &a, const std::string &b);
 
+    /// \brief Derives a key from a password using PBKDF2 (RFC 8018)
+    /// \param password_ptr Pointer to the password buffer
+    /// \param password_len Length of the password in bytes
+    /// \param salt_ptr Pointer to the salt buffer
+    /// \param salt_len Length of the salt in bytes
+    /// \param iterations Number of iterations, must be positive
+    /// \param dk_len Desired length of the derived key in bytes, must be positive
+    /// \param hash_type Hash function to use (SHA1, SHA256, SHA512)
+    /// \return Derived key as a vector of bytes
+    std::vector<uint8_t> pbkdf2(
+            const void* password_ptr, size_t password_len,
+            const void* salt_ptr, size_t salt_len,
+            int iterations, size_t dk_len,
+            TypeHash hash_type);
+
+    /// \brief Derives a key using PBKDF2 from vector-based password and salt
+    template<typename T>
+    inline std::vector<uint8_t> pbkdf2(
+            const std::vector<T>& password,
+            const std::vector<T>& salt,
+            int iterations, size_t dk_len,
+            TypeHash hash_type) {
+        static_assert(std::is_same<T, char>::value || std::is_same<T, uint8_t>::value,
+                      "pbkdf2(vector<T>) supports only char or uint8_t");
+        return pbkdf2(password.data(), password.size(),
+                      salt.data(), salt.size(),
+                      iterations, dk_len, hash_type);
+    }
+
+    /// \brief Derives a key using PBKDF2 from string-based password and salt
+    inline std::vector<uint8_t> pbkdf2(
+            const std::string& password,
+            const std::string& salt,
+            int iterations, size_t dk_len,
+            TypeHash hash_type) {
+        return pbkdf2(password.data(), password.size(),
+                      salt.data(), salt.size(),
+                      iterations, dk_len, hash_type);
+    }
+
     /// \brief Generates a time-based HMAC-SHA256 token
     /// \param key Secret key used for HMAC
     /// \param interval_sec Interval in seconds that defines token rotation. Must be positive. Default is 60 seconds

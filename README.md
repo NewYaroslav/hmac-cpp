@@ -10,6 +10,7 @@ A lightweight `C++11` library for computing `HMAC` (hash-based message authentic
 - Compatible with **C++11**
 - Supports `HMAC` using `SHA256`, `SHA512`, `SHA1`
 - Outputs in binary or hex format
+- Provides **PBKDF2 key derivation** (RFC 8018)
 - Support for **time-based tokens**:
     - **HOTP (RFC 4226)** — counter-based one-time passwords
     - **TOTP (RFC 6238)** — time-based one-time passwords
@@ -153,6 +154,23 @@ Parameters:
 - `type` — Hash type
 
 Returns: Binary digest as `std::vector<uint8_t>`
+
+### PBKDF2 Key Derivation
+
+```cpp
+#include <hmac_cpp/hmac_utils.hpp>
+
+std::string password = "password";
+std::string salt = "salt";
+std::vector<uint8_t> dk = hmac::pbkdf2(password, salt, 1000, 32, hmac::TypeHash::SHA256);
+```
+
+Parameters:
+
+- `password`, `salt` — Raw byte strings
+- `iterations` — Number of iterations
+- `dk_len` — Desired key length in bytes
+- `hash_type` — Hash function (`SHA1`, `SHA256`, `SHA512`)
 
 ### 🕓 HOTP and TOTP Tokens
 
