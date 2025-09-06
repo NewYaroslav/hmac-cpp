@@ -172,6 +172,19 @@ auto prk = hmac::hkdf_extract_sha256(ikm, salt);
 auto okm = hmac::hkdf_expand_sha256(prk, /*info=*/{}, /*L=*/32); // L ≤ 255*HashLen
 ```
 
+### Base64 / Base32
+
+Utility helpers for Base64 (standard or URL alphabet) and Base32.
+
+```cpp
+#include <hmac_cpp/encoding.hpp>
+
+std::vector<uint8_t> key = {0xff, 0xee};
+std::string b64 = hmac_cpp::base64_encode(key, hmac_cpp::Base64Alphabet::Url, false);
+hmac_cpp::secure_buffer<uint8_t> raw;
+hmac_cpp::base64_decode(b64, raw, hmac_cpp::Base64Alphabet::Url, false);
+```
+
 ### 🕓 HOTP / TOTP
 
 OTP per RFC 4226/6238. **Secrets should be random** (not passwords). If you receive Base32 (otpauth URI), decode before calling.

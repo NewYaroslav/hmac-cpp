@@ -11,6 +11,7 @@
 
 #include "hmac_cpp/hmac.hpp"
 #include "hmac_cpp/hmac_utils.hpp"
+#include "hmac_cpp/encoding.hpp"
 
 static std::time_t mock_time_value = 0;
 static int mock_errno_value = 0;
@@ -587,6 +588,53 @@ TEST(TotpTimeErrorTest, ValidityNegativeTimeThrows) {
         std::runtime_error);
     mock_time_value = 0;
     mock_errno_value = 0;
+}
+
+TEST(EncodingTest, Base64Vectors) {
+    std::vector<std::pair<std::string,std::string>> cases = {
+        {"f", "Zg=="},
+        {"fo", "Zm8="},
+        {"foo", "Zm9v"},
+        {"foob", "Zm9vYg=="},
+        {"fooba", "Zm9vYmE="},
+        {"foobar", "Zm9vYmFy"}
+    };
+    for (auto& c : cases) {
+        std::vector<uint8_t> bin(c.first.begin(), c.first.end());
+        EXPECT_EQ(hmac_cpp::base64_encode(bin), c.second);
+        std::vector<uint8_t> out;
+        EXPECT_TRUE(hmac_cpp::base64_decode(c.second, out));
+        EXPECT_EQ(out, bin);
+    }
+    std::vector<uint8_t> special = {0xfb, 0xff};
+    EXPECT_EQ(hmac_cpp::base64_encode(special), "+/8=");
+    EXPECT_EQ(hmac_cpp::base64_encode(special, hmac_cpp::Base64Alphabet::Url), "-_8=");
+    hmac_cpp::secure_buffer<uint8_t> sec;
+    EXPECT_TRUE(hmac_cpp::base64_decode("Zm9v", sec));
+    std::string foo(sec.begin(), sec.end());
+    EXPECT_EQ(foo, "foo");
+}
+
+TEST(EncodingTest, Base32Vectors) {
+    std::vector<std::pair<std::string,std::string>> cases = {
+        {"f", "MY======"},
+        {"fo", "MZXQ===="},
+        {"foo", "MZXW6==="},
+        {"foob", "MZXW6YQ="},
+        {"fooba", "MZXW6YTB"},
+        {"foobar", "MZXW6YTBOI======"}
+    };
+    for (auto& c : cases) {
+        std::vector<uint8_t> bin(c.first.begin(), c.first.end());
+        EXPECT_EQ(hmac_cpp::base32_encode(bin), c.second);
+        std::vector<uint8_t> out;
+        EXPECT_TRUE(hmac_cpp::base32_decode(c.second, out, /*require_padding=*/true));
+        EXPECT_EQ(out, bin);
+    }
+    hmac_cpp::secure_buffer<uint8_t> sec;
+    EXPECT_TRUE(hmac_cpp::base32_decode("MZXW6===", sec, true));
+    std::string foo(sec.begin(), sec.end());
+    EXPECT_EQ(foo, "foo");
 }
 
 int main(int argc, char **argv) {
