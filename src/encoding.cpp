@@ -5,13 +5,15 @@
 
 namespace hmac_cpp {
 
-struct _wipe_string_guard {
+namespace {
+struct _wipe_string_guard final {
     std::string& s;
     explicit _wipe_string_guard(std::string& ref) : s(ref) {}
     ~_wipe_string_guard() {
         if (!s.empty()) std::fill(s.begin(), s.end(), '\0');
     }
 };
+} // anonymous namespace
 
 // ======================
 // Helpers (Base64)
@@ -23,13 +25,13 @@ static inline const char* b64_alphabet(Base64Alphabet a) {
         : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 }
 
-static inline void b64_build_reverse(Base64Alphabet a, int8_t rev[256]) {
+static inline void b64_build_reverse(Base64Alphabet a, int8_t rev[256], bool allow_alias) {
     for (int i = 0; i < 256; ++i) rev[i] = -1;
     const char* alpha = b64_alphabet(a);
     for (int i = 0; i < 64; ++i) {
         rev[ static_cast<unsigned char>(alpha[i]) ] = static_cast<int8_t>(i);
     }
-    if (a == Base64Alphabet::Url) {
+    if (a == Base64Alphabet::Url && allow_alias) {
         rev[ static_cast<unsigned char>('+') ] = 62;
         rev[ static_cast<unsigned char>('/') ] = 63;
     }
@@ -115,7 +117,7 @@ bool base64_decode(const std::string& in, std::vector<uint8_t>& out,
     }
 
     int8_t rev[256];
-    b64_build_reverse(alphabet, rev);
+    b64_build_reverse(alphabet, rev, !strict);
 
     size_t approx = (L / 4) * 3 + 3;
     out.reserve(approx);
