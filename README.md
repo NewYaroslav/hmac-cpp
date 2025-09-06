@@ -5,106 +5,90 @@
 [![macOS](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-macOS.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/hmac-cpp/actions/workflows/CI-macOS.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A lightweight `C++11` library for computing `HMAC` (hash-based message authentication codes), supporting `SHA1`, `SHA256`, `SHA512`, as well as one-time passwords compliant with `HOTP` (RFC 4226) and `TOTP` (RFC 6238).
+A lightweight **C++11** library for computing **HMAC** (SHA-1/SHA-256/SHA-512), key derivation (**PBKDF2**, **HKDF**), and OTP (**HOTP**, **TOTP**). Includes optional **time-based HMAC tokens** for simple stateless use-cases and **MQL5** compatibility.
+
+---
 
 ## 🚀 Features
 
-- Compatible with **C++11**
-- Supports `HMAC` using `SHA256`, `SHA512`, `SHA1`
-- Outputs in binary or hex format
-- Provides **PBKDF2 key derivation** (RFC 8018)
-- Implements **HKDF (RFC 5869)** for key extraction/expansion
-- Support for **time-based tokens**:
-    - **HOTP (RFC 4226)** — counter-based one-time passwords
-    - **TOTP (RFC 6238)** — time-based one-time passwords
-    - **HMAC Time Tokens** — lightweight HMAC-based tokens with rotation interval
-- Includes **MQL5 support** — adapted SHA/HMAC versions for MetaTrader
-- Static build via CMake
-- Example program included
+* **C++11** compatible
+* HMAC with **SHA1**, **SHA256**, **SHA512**
+* Output as **binary** or **hex**
+* **PBKDF2** (RFC 8018) — password-based key derivation
+* **HKDF** (RFC 5869) — key extraction/expansion
+* **OTP**:
 
-## 🔧 Build and Installation
+  * **HOTP** (RFC 4226) — counter-based
+  * **TOTP** (RFC 6238) — time-based
+* **Time-based HMAC tokens** — lightweight, stateless HMAC(timestamp)-style tokens *(not TOTP/HOTP)*
+* **MQL5 support** — adapted SHA/HMAC for MetaTrader 5
+* Exported CMake package target: **`hmac_cpp::hmac_cpp`**
 
-Examples, tests, and benchmarks are disabled by default. Enable them with
-`HMACCPP_BUILD_EXAMPLES`, `HMACCPP_BUILD_TESTS`, and `HMACCPP_BUILD_BENCH`.
+---
 
-Use CMake to build:
+## ⚙️ Platform & Compiler Support
+
+CI covers Linux/Windows/macOS. Tested with GCC, Clang, and MSVC; requires C++11.
+
+---
+
+## 🔧 Build & Installation
+
+Examples, tests, and benchmarks are OFF by default. Enable via:
+
+* `HMACCPP_BUILD_EXAMPLES`
+* `HMACCPP_BUILD_TESTS`
+* `HMACCPP_BUILD_BENCH`
+
+### Build
 
 ```bash
 cmake -B build -DHMACCPP_BUILD_EXAMPLES=ON
 cmake --build build
 ```
 
-To install the library and headers:
+### Install
 
 ```bash
 cmake --install build --prefix _install
 ```
 
-This will create the following structure:
+Install layout:
 
 ```
 _install/
-├── include/hmac_cpp/
-│   ├── hmac.hpp
-│   ├── hmac_utils.hpp
-│   ├── sha1.hpp
-│   ├── sha256.hpp
-│   └── sha512.hpp
-    └── lib/
-        └── libhmac_cpp.a
+├─ include/hmac_cpp/
+│  ├─ hmac.hpp
+│  ├─ hmac_utils.hpp
+│  ├─ sha1.hpp
+│  ├─ sha256.hpp
+│  ├─ sha512.hpp
+│  └─ secure_buffer.hpp    # if included in your build
+└─ lib/
+   └─ libhmac_cpp.a
 ```
 
-Include headers in your code as `<hmac_cpp/...>`
-
-Predefined `.bat` scripts for MinGW builds are also available: `build_*.bat`.
-
-After installation, the package can be found and linked in other projects using `find_package`:
+### Consume with CMake
 
 ```cmake
 find_package(hmac_cpp CONFIG REQUIRED)
 target_link_libraries(my_app PRIVATE hmac_cpp::hmac_cpp)
 ```
 
-## 🧪 Running Tests
-
-Enable tests during configuration and run them with CTest:
+### Manual compile after install
 
 ```bash
-cmake -B build -DHMACCPP_BUILD_TESTS=ON
-cmake --build build
-cd build
-ctest --output-on-failure
+# adjust paths to your prefix
+g++ example.cpp -std=c++11 -I_install/include -L_install/lib -lhmac_cpp
 ```
 
-Alternatively, use the helper script:
+Predefined MinGW build scripts are available: `build_*.bat`.
 
-```bash
-scripts/run_tests.sh
-```
+---
 
-## Test Vectors
+## 📘 Usage
 
-The test suite covers official vectors from [RFC&nbsp;4231](https://www.rfc-editor.org/rfc/rfc4231) and [RFC&nbsp;6070](https://www.rfc-editor.org/rfc/rfc6070) and runs in CI.
-
-## 📦 MQL5 Compatibility
-
-The repository includes `sha256.mqh`, `sha512.mqh`, `hmac.mqh`, and `hmac_utils.mqh` files, fully compatible with `MetaTrader 5`.
-
-You can use the same interface inside your MQL5 scripts and experts:
-
-```mql5
-#include <hmac-cpp/hmac.mqh>
-
-string hash = hmac::get_hmac("key", "message", hmac::TypeHash::SHA256);
-```
-
-| Hash function | C++ enum              | MQL enum              |
-|---------------|----------------------|-----------------------|
-| SHA1          | `hmac::TypeHash::SHA1`| – (not available)     |
-| SHA256        | `hmac::TypeHash::SHA256` | `hmac::TypeHash::SHA256` |
-| SHA512        | `hmac::TypeHash::SHA512` | `hmac::TypeHash::SHA512` |
-
-## Usage
+> **Note on SHA-1**: HMAC-SHA1 is supported for compatibility/OTP. Prefer HMAC-SHA256/512 for new designs.
 
 ### HMAC (string input)
 
@@ -117,63 +101,31 @@ std::string get_hmac(
     bool is_upper = false);
 ```
 
-Parameters:
+* `type`: `hmac::TypeHash::SHA256` / `SHA512` / `SHA1`
+* Returns hex by default. For **binary** output, prefer the `std::vector<uint8_t>` overload.
 
-- `key` — Secret key
-- `msg` — Message
-- `type` — Hash type: `hmac::TypeHash::SHA256` or `SHA512`
-- `is_hex` — Return hex string (`true`) or raw binary (`false`) [default: true]
-- `is_upper` — Use uppercase hex (only applies if `is_hex == true`) [default: false]
-
-Returns:
-If `is_hex == true`, returns a hexadecimal string (`std::string`) of the HMAC.
-If `is_hex == false`, returns a raw binary string; for binary output, prefer the `std::vector<uint8_t>` overload.
-
-#### Secure handling of string keys
-
-When a secret key is obtained as a `std::string` (e.g. an API key from an exchange),
-move it into a `secure_buffer` to erase the original string immediately:
+**Constant-time compare** — treat lengths as public:
 
 ```cpp
-#include <cstdlib>
+bool equal = (a.size() == b.size()) && hmac::constant_time_equal(a, b);
+```
+
+**(Optional) Secure handling of string keys** — if you use `secure_buffer`:
+
+```cpp
 #include <hmac_cpp/secure_buffer.hpp>
-
-std::string api_key = std::getenv("API_KEY");
-secure_buffer key(std::move(api_key)); // api_key is zeroized
-
-std::vector<uint8_t> sig =
-    hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
-secure_zero(key); // optional: wipe after use
+secure_buffer key(std::move(secret_string)); // zeroizes moved-from string
+auto mac = hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
 ```
 
-To compare two tokens directly, use `hmac::constant_time_equal` for a
-timing-safe check:
-
-```cpp
-bool same = hmac::constant_time_equal(expected_token, user_token); // lengths are public
-```
-
-### HMAC (binary data: raw buffer)
+### HMAC (raw buffer)
 
 ```cpp
 std::vector<uint8_t> get_hmac(
-    const void* key_ptr,
-    size_t key_len,
-    const void* msg_ptr,
-    size_t msg_len,
-    TypeHash type
-);
+    const void* key_ptr, size_t key_len,
+    const void* msg_ptr, size_t msg_len,
+    TypeHash type);
 ```
-
-Parameters:
-
-- `key_ptr` — Pointer to secret key buffer
-- `key_len` — Length of key in bytes
-- `msg_ptr` — Pointer to message buffer
-- `msg_len` — Length of message in bytes
-- `type` — Hash type
-
-Returns: Binary digest as `std::vector<uint8_t>`
 
 ### HMAC (vectors)
 
@@ -182,59 +134,34 @@ template<typename T>
 std::vector<uint8_t> get_hmac(
     const std::vector<T>& key,
     const std::vector<T>& msg,
-    TypeHash type
-);
+    TypeHash type);
+// T must be char or uint8_t
 ```
 
-Template requirement: `T` must be `char` or `uint8_t`
+### PBKDF2 (RFC 8018)
 
-Parameters:
-
-- `key` — Vector containing the key
-- `msg` — Vector containing the message
-- `type` — Hash type
-
-Returns: Binary digest as `std::vector<uint8_t>`
-
-### PBKDF2
-
-PBKDF2 derives a cryptographic key from a user password. It is typically
-used to unlock encrypted data or verify password hashes.
+Derive a key from a password.
 
 ```cpp
 #include <hmac_cpp/hmac_utils.hpp>
 auto salt = hmac::random_bytes(16);
-auto key  = hmac::pbkdf2_hmac_sha256(password, salt, iters, 32);
+auto key  = hmac::pbkdf2_hmac_sha256(password, salt, iters, 32); // 32 = AES-256
 ```
 
-Recommendations:
+**Recommendations**
 
-- **Salt:** 16–32 random bytes.
-- **Iterations:** pick a value so derivation takes ~100–250 ms on the target
-  machine.
-- **Derived key length:** 32 bytes.
-- **Algorithm:** HMAC-SHA-256.
+* **Salt**: 16–32 random bytes (unique per password). Store next to ciphertext.
+* **Iterations**: tune for \~100–250 ms on target hardware (e.g., desktop ≈ 600k, laptop ≈ 300k, mobile ≈ 150k; adjust).
+* **Derived key length**: 32 bytes; **PRF**: HMAC-SHA256.
 
-Parameters and ciphertext may be serialized as:
-`magic|salt|iters|iv|ct|tag`.
+**Serialization example** (binary):
 
-See `example_pbkdf2.cpp` for a complete example.
+```
+magic(4) | ver(1) | alg(1=PBKDF2-HS256) |
+iter(4, BE) | salt_len(1) | salt | iv_len(1) | iv | ct_len(4, BE) | ct | tag(16)
+```
 
-#### Recommended Parameters
-
-| Target  | Iterations | Derived key length | PRF |
-|---------|-----------:|------------------:|-----|
-| Desktop | 600000     | 32 bytes          | HMAC-SHA256 |
-| Laptop  | 300000     | 32 bytes          | HMAC-SHA256 |
-| Mobile  | 150000     | 32 bytes          | HMAC-SHA256 |
-
-#### Security Notes
-
-- PBKDF2 is CPU-bound and vulnerable to massive GPU/ASIC brute force.
-  Choose high iteration counts or stronger KDFs.
-- Every password requires a unique, random salt of sufficient length.
-- Salts, iteration counts, and algorithms are not secrets—store them
-  alongside the hash or ciphertext.
+See `example_pbkdf2.cpp` for an end-to-end example.
 
 ### HKDF (RFC 5869)
 
@@ -242,100 +169,98 @@ See `example_pbkdf2.cpp` for a complete example.
 std::vector<uint8_t> ikm = {/* secret material */};
 std::vector<uint8_t> salt(16, 0x00);
 auto prk = hmac::hkdf_extract_sha256(ikm, salt);
-auto okm = hmac::hkdf_expand_sha256(prk, {}, 32); // derive 32 bytes
+auto okm = hmac::hkdf_expand_sha256(prk, /*info=*/{}, /*L=*/32); // L ≤ 255*HashLen
 ```
 
-### 🕓 HOTP and TOTP Tokens
+### 🕓 HOTP / TOTP
 
-The library supports generating one-time passwords based on RFC 4226 and RFC 6238.
-Secrets are supplied as raw bytes. If you receive a Base32 string (common in OTP
-URIs), decode it before calling the functions.
+OTP per RFC 4226/6238. **Secrets should be random** (not passwords). If you receive Base32 (otpauth URI), decode before calling.
 
-- **HOTP** — 6 digits, SHA-1.
-- **TOTP** — 30 s period, 6 digits, SHA-1. `is_totp_token_valid` accepts tokens
-  from the previous and next interval (±1).
-
-#### HOTP (HMAC-based One-Time Password)
+* **HOTP** — 6 digits, SHA-1 (default).
+* **TOTP** — 30 s step, 6 digits, SHA-1 (default). `is_totp_token_valid` checks ±1 step by default.
 
 ```cpp
 #include <hmac_cpp/hmac_utils.hpp>
 
-std::string key = "12345678901234567890"; // raw key
+std::string key = "12345678901234567890"; // raw bytes
 uint64_t counter = 0;
-int otp = get_hotp_code(key, counter); // defaults: 6 digits, SHA1
-std::cout << "HOTP: " << otp << std::endl;
-bool ok = (otp == 755224); // RFC 4226 test vector
+int hotp = get_hotp_code(key, counter);
+int totp = get_totp_code(key); // now()
 ```
 
-#### TOTP (Time-based One-Time Password)
+Validation example (RFC 6238 vector):
 
 ```cpp
-#include <hmac_cpp/hmac_utils.hpp>
-
-std::string key = "12345678901234567890"; // raw key
-int otp = get_totp_code(key); // defaults: 30s period, 6 digits, SHA1
-std::cout << "TOTP: " << otp << std::endl;
+bool ok = hmac::is_totp_token_valid(94287082, key, /*time=*/59, /*step=*/30,
+                                    /*digits=*/8, hmac::TypeHash::SHA1);
 ```
 
-You can also generate a code for a specific timestamp:
+### 🕓 Time-Based HMAC Tokens (custom)
+
+A simple **stateless** HMAC(timestamp) scheme *(not TOTP/HOTP)*:
+
+* Default **SHA256** (also SHA1/SHA512 supported)
+* Full HMAC digest as tag (hex)
+* Valid within previous/current/next interval (±`interval_sec`)
+* Optional binding to a **client fingerprint** (device ID, etc.)
+* **No replay protection** within the interval — use TOTP/HOTP or server-side nonce tracking for high-risk scenarios
 
 ```cpp
-uint64_t time_at = 1700000000;
-int otp = get_totp_code_at(key, time_at);
+std::string token = hmac::generate_time_token(secret_key, /*interval=*/60);
+bool valid = hmac::is_token_valid(token, secret_key, 60);
+
+// with fingerprint
+std::string t2 = hmac::generate_time_token(secret_key, fingerprint, 60);
+bool v2 = hmac::is_token_valid(t2, secret_key, fingerprint, 60);
 ```
 
-To verify a received code:
+---
 
-```cpp
-bool valid = hmac::is_totp_token_valid(94287082, key, 59, 30, 8, hmac::TypeHash::SHA1); // RFC 6238 test vector
+## 📦 MQL5 Compatibility
+
+Repository provides `sha256.mqh`, `sha512.mqh`, `hmac.mqh`, `hmac_utils.mqh` (MetaTrader 5).
+
+**Install:** copy these files into your MT5 folder, e.g. `MQL5/Include/hmac-cpp/`, then:
+
+```mql5
+#include <hmac-cpp/hmac.mqh>
+string mac = hmac::get_hmac("key", "message", hmac::TypeHash::SHA256);
 ```
 
-Known test vectors: [RFC 4226 Appendix D](https://www.rfc-editor.org/rfc/rfc4226#appendix-D) and [RFC 6238 Appendix B](https://www.rfc-editor.org/rfc/rfc6238#appendix-B).
+| Hash function | C++ enum                 | MQL enum                 |
+| ------------- | ------------------------ | ------------------------ |
+| SHA1          | `hmac::TypeHash::SHA1`   | – (not available)        |
+| SHA256        | `hmac::TypeHash::SHA256` | `hmac::TypeHash::SHA256` |
+| SHA512        | `hmac::TypeHash::SHA512` | `hmac::TypeHash::SHA512` |
 
-### 🕓 Time-Based HMAC Tokens (Custom HMAC Time Tokens)
+> **Note:** C++ includes use `hmac_cpp/...` (underscore), MQL includes use `hmac-cpp/...` (dash directory name).
 
-The library also includes a **lightweight implementation of time-based HMAC tokens**. This is *not* TOTP or HOTP; it's a simple `HMAC(timestamp)` approach. These tokens:
+---
 
-- Are based on `HMAC(timestamp)`
-- Default to `SHA256` but also support `SHA1` and `SHA512`
-- Use the full HMAC digest as the tag (32 bytes → 64 hex chars with `SHA256`)
-- Are returned as lowercase `hex` strings
-- Are valid for the previous, current, and next interval (±`interval_sec`)
-- Require no server-side state (stateless)
-- Support binding to a *client fingerprint* (e.g. device ID)
-- Provide basic replay protection and are intended for low-risk scenarios
+## ✅ Tests & Vectors
 
-#### Example:
+Enable tests and run with CTest:
 
-```cpp
-#include <hmac_cpp/hmac_utils.hpp>
-
-std::string token = hmac::generate_time_token(secret_key, 60);
-bool is_valid = hmac::is_token_valid(token, secret_key, 60);
+```bash
+cmake -B build -DHMACCPP_BUILD_TESTS=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
 ```
 
-You can also bind the token to a *client fingerprint*:
+Covered vectors:
 
-```cpp
-std::string token = hmac::generate_time_token(secret_key, fingerprint, 60);
-bool is_valid = hmac::is_token_valid(token, secret_key, fingerprint, 60);
-```
+* HMAC — **RFC 4231**
+* PBKDF2 — **RFC 6070**
+* HOTP — **RFC 4226** (Appendix D)
+* TOTP — **RFC 6238** (Appendix B)
 
-If `interval_sec` is not positive, the functions throw `std::invalid_argument`:
+CI runs these on Linux/Windows/macOS.
 
-```cpp
-try {
-    hmac::generate_time_token(secret_key, 0);
-} catch (const std::invalid_argument& e) {
-    std::cout << e.what();
-}
-```
+---
 
-This is useful for stateless authentication, API protection, and one-time tokens.
+## 📄 Example Program
 
-## 📄 Example
-
-The example is in `example.cpp` and builds when `HMACCPP_BUILD_EXAMPLES=ON`.
+`example.cpp` builds when `HMACCPP_BUILD_EXAMPLES=ON`.
 
 ```cpp
 #include <iostream>
@@ -347,47 +272,55 @@ int main() {
     std::string key = "12345";
 
     std::string mac = hmac::get_hmac(key, input, hmac::TypeHash::SHA256);
-    if (hmac::constant_time_equal(mac,
-            "7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca")) {
-        std::cout << "MAC verified\n";
-    }
-
-    return 0;
+    bool ok = (mac.size() == 64) &&
+              hmac::constant_time_equal(
+                  mac,
+                  "7632ac2e8ddedaf4b3e7ab195fefd17571c37c970e02e169195a158ef59e53ca");
+    if (ok) std::cout << "MAC verified\n";
 }
 ```
 
-**Note:** `constant_time_equal` treats input lengths as public and may run
-longer for longer inputs. Avoid checking lengths separately—early length
-comparisons can leak information through timing side channels.
-
-Build the example manually after installation:
+Manual build after install:
 
 ```bash
-g++ example.cpp -std=c++11 -Iinclude -Llib -lhmac_cpp
+g++ example.cpp -std=c++11 -I_install/include -L_install/lib -lhmac_cpp
 ```
 
-Using MSVC:
+MSVC:
 
 ```bat
-cl /EHsc example.cpp /I include /link libhmac_cpp.lib
+cl /EHsc example.cpp /I _install\include /link /LIBPATH:_install\lib hmach_cpp.lib
 ```
+
+---
+
+## ⚠️ Exceptions & Contracts
+
+* Functions may throw `std::invalid_argument` (bad params) and `std::runtime_error` (internal errors).
+* `constant_time_equal` assumes lengths are public; compare sizes first.
+* PBKDF2 limits: `dkLen ≤ (2^32−1)·hLen`; iterations ≥ 1; salt length ≥ 16 recommended.
+* HKDF limits: `L ≤ 255·HashLen`.
+* Thread-safety: functions are stateless and thread-safe given separate buffers.
+
+---
 
 ## 📚 Resources
 
-* Original [SHA256 implementation](http://www.zedwood.com/article/cpp-sha256-function)
-* Original [SHA512 implementation](http://www.zedwood.com/article/cpp-sha512-function)
-* Algorithm description on [Wikipedia](https://ru.wikipedia.org/wiki/HMAC)
+* Original SHA-256: [http://www.zedwood.com/article/cpp-sha256-function](http://www.zedwood.com/article/cpp-sha256-function)
+* Original SHA-512: [http://www.zedwood.com/article/cpp-sha512-function](http://www.zedwood.com/article/cpp-sha512-function)
+* HMAC (wiki): [https://en.wikipedia.org/wiki/HMAC](https://en.wikipedia.org/wiki/HMAC)
+
+---
 
 ## 🔗 Related Projects
 
-- [ADVobfuscator](https://github.com/andrivet/ADVobfuscator)
-- [obfy](https://github.com/NewYaroslav/obfy)
-- [aes-cpp](https://github.com/NewYaroslav/aes-cpp)
-- [siphash-cpp](https://github.com/NewYaroslav/siphash-cpp)
+* [ADVobfuscator](https://github.com/andrivet/ADVobfuscator)
+* [obfy](https://github.com/NewYaroslav/obfy)
+* [aes-cpp](https://github.com/NewYaroslav/aes-cpp)
+* [siphash-cpp](https://github.com/NewYaroslav/siphash-cpp)
+
+---
 
 ## 📝 License
 
-This project is licensed under the **MIT License**.
-You are free to use, copy, modify, and distribute this software, provided that the original license notice is included.
-
-See the [`LICENSE`](./LICENSE) file for full details.
+MIT — see [`LICENSE`](./LICENSE).
