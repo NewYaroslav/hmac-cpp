@@ -230,7 +230,7 @@ TEST(HMACTest, RFC4231Vectors) {
         { repeat("aa", 131), "54657374205573696e67204c6172676572205468616e20426c6f636b2d53697a65204b6579202d2048617368204b6579204669727374",
           "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54",
           "80b24263c7c1a3ebb71493c1dd7be8b49b46d1f41b4aeec1121b013783f8f3526b56d037e05f2598bd0fd2215d6a1e5295e64f73f63f0aec8b915a985d786598",
-          16 },
+          0 },
         { repeat("aa", 131),
           "5468697320697320612074657374207573696e672061206c6172676572207468616e20626c6f636b2d73697a65206b657920616e642061206c6172676572207468616e20626c6f636b2d73697a6520646174612e20546865206b6579206e6565647320746f2062652068617368656420746f67657468657220616e64207468652064617461206e6565647320746f2062652068617368656420746f6765746865722e",
           "aa2c6460ff60440a71a9bbb5c07ce5d6e6bee38e2921ed125b55696163532437",
@@ -255,6 +255,47 @@ TEST(HMACTest, RFC4231Vectors) {
                       vectors[i].sha512.substr(0, vectors[i].truncate_to * 2))
                 << "Case " << i + 1 << " SHA-512 trunc mismatch";
         }
+    }
+}
+
+TEST(HMACTest, RFC2202Vectors) {
+    struct Vector {
+        std::string key_hex;
+        std::string data_hex;
+        std::string sha1;
+    };
+    // HMAC-SHA1 test cases from RFC 2202
+    auto repeat = [](const std::string& pattern, size_t count) {
+        std::string s;
+        s.reserve(pattern.size() * count);
+        for (size_t i = 0; i < count; ++i) s += pattern;
+        return s;
+    };
+
+    std::vector<Vector> vectors = {
+        { repeat("0b", 20), "4869205468657265",
+          "b617318655057264e28bc0b6fb378c8ef146be00" },
+        { "4a656665",
+          "7768617420646f2079612077616e7420666f72206e6f7468696e673f",
+          "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79" },
+        { repeat("aa", 20), repeat("dd", 50),
+          "125d7342b9ac11cd91a39af48aa17b4f63f175d3" },
+        { "0102030405060708090a0b0c0d0e0f10111213141516171819", repeat("cd", 50),
+          "4c9007f4026250c6bc8414f9bf50c86c2d7235da" },
+        { repeat("0c", 20), "546573742057697468205472756e636174696f6e",
+          "4c1a03424b55e07fe7f27be1d58bb9324a9a5a04" },
+        { repeat("aa", 80), "54657374205573696e67204c6172676572205468616e20426c6f636b2d53697a65204b6579202d2048617368204b6579204669727374",
+          "aa4ae5e15272d00e95705637ce8a3b55ed402112" },
+        { repeat("aa", 80), "54657374205573696e67204c6172676572205468616e20426c6f636b2d53697a65204b657920616e64204c6172676572205468616e204f6e6520426c6f636b2d53697a652044617461",
+          "e8e99d0f45237d786d6bbaa7965c7808bbff1a91" }
+    };
+
+    for (size_t i = 0; i < vectors.size(); ++i) {
+        auto key = from_hex(vectors[i].key_hex);
+        auto data = from_hex(vectors[i].data_hex);
+        auto h = hmac::get_hmac(key, data, hmac::TypeHash::SHA1);
+        std::string hex = hmac::to_hex(std::string(h.begin(), h.end()));
+        EXPECT_EQ(hex, vectors[i].sha1) << "Case " << i + 1 << " SHA1 mismatch";
     }
 }
 

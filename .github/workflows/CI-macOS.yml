@@ -30,7 +30,8 @@ jobs:
       - name: Build
         run: cmake --build build
       - name: Run tests
-        run: cd build && ctest --output-on-failure -R 'test_all|test_totp'
+        run: ctest --test-dir build --output-on-failure -R "test_all|test_totp"
+
   vcpkg:
     runs-on: macos-latest
     steps:
@@ -45,4 +46,4 @@ jobs:
       - name: Build
         run: cmake --build build
       - name: Run tests
-        run: cd build && ctest --output-on-failure -R 'test_all|test_totp'
+        run: ctest --test-dir build --output-on-failure -R "test_all|test_totp"
