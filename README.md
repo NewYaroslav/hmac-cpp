@@ -32,6 +32,20 @@ CI covers Linux/Windows/macOS. Tested with GCC, Clang, and MSVC; requires C++11.
 
 ---
 
+## 📈 Versioning / SemVer policy
+
+* Follows [Semantic Versioning](https://semver.org).
+* MAJOR: breaking changes to headers or exported symbols.
+* MINOR: backward-compatible additions.
+* PATCH: bug fixes and internal changes.
+
+Version macros live in `<hmac_cpp/version.hpp>`:
+`HMAC_CPP_VERSION_MAJOR`, `HMAC_CPP_VERSION_MINOR`,
+`HMAC_CPP_VERSION_PATCH`, and `HMAC_CPP_VERSION`.
+See [CHANGELOG.md](CHANGELOG.md) for history.
+
+---
+
 ## 🔧 Build & Installation
 
 Examples, tests, and benchmarks are OFF by default. Enable via:
@@ -39,6 +53,10 @@ Examples, tests, and benchmarks are OFF by default. Enable via:
 * `HMACCPP_BUILD_EXAMPLES`
 * `HMACCPP_BUILD_TESTS`
 * `HMACCPP_BUILD_BENCH`
+
+The library builds **static** by default. Use `-DHMACCPP_BUILD_SHARED=ON`
+to produce a shared library. The `HMAC_CPP_API` macro is empty for static
+builds and controls symbol export/import for shared builds.
 
 ### Build
 
@@ -51,22 +69,20 @@ cmake --build build
 
 ```bash
 cmake --install build --prefix _install
+# MSVC
+cmake --install build --config Release --prefix _install
 ```
 
 Install layout:
 
 ```
 _install/
-├─ include/hmac_cpp/
-│  ├─ hmac.hpp
-│  ├─ hmac_utils.hpp
-│  ├─ sha1.hpp
-│  ├─ sha256.hpp
-│  ├─ sha512.hpp
-│  └─ secure_buffer.hpp    # if included in your build
-└─ lib/
-   └─ libhmac_cpp.a
+├── include/hmac_cpp/...
+└── lib/
+    └── libhmac_cpp.a
 ```
+
+A `hmac_cpp.pc` file is installed for `pkg-config`.
 
 ### Consume with CMake
 
@@ -80,6 +96,10 @@ target_link_libraries(my_app PRIVATE hmac_cpp::hmac_cpp)
 ```bash
 # adjust paths to your prefix
 g++ example.cpp -std=c++11 -I_install/include -L_install/lib -lhmac_cpp
+# MSVC
+cl /EHsc example.cpp /I _install\include /link /LIBPATH:_install\lib hmac_cpp.lib
+# pkg-config
+c++ example.cpp $(pkg-config --cflags --libs hmac_cpp)
 ```
 
 Predefined MinGW build scripts are available: `build_*.bat`.
@@ -153,6 +173,8 @@ auto key  = hmac::pbkdf2_hmac_sha256(password, salt, iters, 32); // 32 = AES-256
 * **Salt**: 16–32 random bytes (unique per password). Store next to ciphertext.
 * **Iterations**: tune for \~100–250 ms on target hardware (e.g., desktop ≈ 600k, laptop ≈ 300k, mobile ≈ 150k; adjust).
 * **Derived key length**: 32 bytes; **PRF**: HMAC-SHA256.
+
+> PBKDF2 is CPU-bound; for user passwords prefer memory-hard KDFs such as Argon2 or scrypt if available.
 
 **Serialization example** (binary):
 
@@ -262,12 +284,14 @@ ctest --test-dir build --output-on-failure
 
 Covered vectors:
 
-* HMAC — **RFC 4231**
-* PBKDF2 — **RFC 6070**
-* HOTP — **RFC 4226** (Appendix D)
-* TOTP — **RFC 6238** (Appendix B)
+| Suite  | RFC |
+| ------ | --- |
+| HMAC   | RFC 4231 |
+| PBKDF2 | RFC 6070 |
+| HOTP   | RFC 4226 (App D) |
+| TOTP   | RFC 6238 (App B) |
 
-CI runs these on Linux/Windows/macOS.
+CI: [GitHub Actions](https://github.com/NewYaroslav/hmac-cpp/actions).
 
 ---
 
@@ -302,15 +326,18 @@ g++ example.cpp -std=c++11 -I_install/include -L_install/lib -lhmac_cpp
 MSVC:
 
 ```bat
-cl /EHsc example.cpp /I _install\include /link /LIBPATH:_install\lib hmach_cpp.lib
+cl /EHsc example.cpp /I _install\include /link /LIBPATH:_install\lib hmac_cpp.lib
 ```
 
 ---
 
 ## ⚠️ Exceptions & Contracts
 
-* Functions may throw `std::invalid_argument` (bad params) and `std::runtime_error` (internal errors).
-* `constant_time_equal` assumes lengths are public; compare sizes first.
+* `pbkdf2`, `hkdf_*`, HOTP/TOTP, and time-token helpers validate parameters and throw
+  `std::invalid_argument`; time-token helpers also throw `std::runtime_error` if the
+  system clock fails.
+* `base64_decode` and `base32_decode` are `noexcept` and return `false` on invalid input.
+* `constant_time_equal` is `noexcept`; compare sizes first.
 * PBKDF2 limits: `dkLen ≤ (2^32−1)·hLen`; iterations ≥ 1; salt length ≥ 16 recommended.
 * HKDF limits: `L ≤ 255·HashLen`.
 * Thread-safety: functions are stateless and thread-safe given separate buffers.
