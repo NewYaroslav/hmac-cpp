@@ -11,6 +11,7 @@ set(HMAC_SOURCES
     src/sha512.cpp
     src/hmac.cpp
     src/hmac_utils.cpp
+    src/encoding.cpp
 )
 
 set(HMAC_HEADERS
@@ -21,6 +22,7 @@ set(HMAC_HEADERS
     include/hmac_cpp/sha256.hpp
     include/hmac_cpp/sha512.hpp
     include/hmac_cpp/secure_buffer.hpp
+    include/hmac_cpp/encoding.hpp
 )
 
 add_library(hmac_cpp ${HMAC_SOURCES})
@@ -58,6 +60,10 @@ endif()
       add_executable(example_pbkdf2 example_pbkdf2.cpp)
       target_link_libraries(example_pbkdf2 PRIVATE hmac_cpp)
       target_include_directories(example_pbkdf2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+      add_executable(example_encoding example_encoding.cpp)
+      target_link_libraries(example_encoding PRIVATE hmac_cpp)
+      target_include_directories(example_encoding PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
   endif()
 
 include(CMakePackageConfigHelpers)

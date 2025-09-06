@@ -2,6 +2,7 @@
 #define HMAC_CPP_SECURE_BUFFER_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 #include <type_traits>
 #include <string>
