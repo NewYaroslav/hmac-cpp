@@ -6,6 +6,7 @@
 #include <array>
 #include <string>
 #include <vector>
+#include <cstddef>
 
 #ifndef HMAC_CPP_MAX_PBKDF2_ITERATIONS
 #define HMAC_CPP_MAX_PBKDF2_ITERATIONS 1000000u
@@ -34,6 +35,11 @@ namespace hmac_cpp {
     ///       and may influence timing.
     HMAC_CPP_API bool constant_time_equal(const uint8_t* a, size_t a_len,
                                           const uint8_t* b, size_t b_len);
+
+    /// \brief Generate \p n cryptographically random bytes.
+    /// \param n Number of bytes to generate.
+    /// \return Vector filled with random bytes.
+    HMAC_CPP_API std::vector<uint8_t> random_bytes(size_t n);
 
     /// \brief Compare vectors in constant time.
     /// \param a First vector.

@@ -52,10 +52,14 @@ CI охватывает Linux/Windows/macOS. Тестировалась с GCC, 
 * `HMACCPP_BUILD_EXAMPLES`
 * `HMACCPP_BUILD_TESTS`
 * `HMACCPP_BUILD_BENCH`
+* `HMACCPP_ENABLE_MLOCK`
 
 Библиотека по умолчанию собирается **статически**. Чтобы получить динамическую,
 используйте `-DHMACCPP_BUILD_SHARED=ON`. Макрос `HMAC_CPP_API` пуст для статической
 сборки и управляет экспортом/импортом символов в динамической.
+
+`HMACCPP_ENABLE_MLOCK` включает попытку пиновать секретные буферы в RAM с помощью
+`mlock`/`VirtualLock`. Отключите, если платформа не позволяет.
 
 ### Сборка
 
@@ -135,6 +139,21 @@ bool equal = (a.size() == b.size()) && hmac::constant_time_equal(a, b);
 #include <hmac_cpp/secure_buffer.hpp>
 secure_buffer key(std::move(secret_string)); // обнуляет перемещённую строку
 auto mac = hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
+```
+
+Для дополнительной защиты в памяти можно использовать `secret_string`, который
+обфусцирует данные и по возможности закрепляет их в RAM:
+
+```cpp
+#include <hmac_cpp/secret.hpp>
+
+hmac_cpp::secret_string token("super-secret-token");
+
+token.with_plaintext([](const uint8_t* p, size_t n){
+    // p действует только внутри коллбэка
+});
+
+token.clear();
 ```
 
 ### HMAC (сырой буфер)
