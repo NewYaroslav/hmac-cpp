@@ -4,6 +4,11 @@ project(hmac_cpp VERSION 0.3.0 LANGUAGES CXX)
 option(HMACCPP_BUILD_EXAMPLES "Build the example program" OFF)
 option(HMACCPP_BUILD_TESTS "Build the test suite" OFF)
 option(HMACCPP_BUILD_BENCH "Build benchmarks" OFF)
+option(HMACCPP_BUILD_SHARED "Build hmac_cpp as a shared library" OFF)
+
+if(HMACCPP_BUILD_SHARED)
+    set(BUILD_SHARED_LIBS ON)
+endif()
 
 set(HMAC_SOURCES
     src/sha1.cpp
@@ -23,6 +28,7 @@ set(HMAC_HEADERS
     include/hmac_cpp/sha512.hpp
     include/hmac_cpp/secure_buffer.hpp
     include/hmac_cpp/encoding.hpp
+    include/hmac_cpp/version.hpp
 )
 
 add_library(hmac_cpp ${HMAC_SOURCES})
@@ -90,6 +96,9 @@ install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/hmac_cppConfigVersion.cmake"
     DESTINATION lib/cmake/hmac_cpp
 )
+
+configure_file(cmake/hmac_cpp.pc.in "${CMAKE_CURRENT_BINARY_DIR}/hmac_cpp.pc" @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/hmac_cpp.pc" DESTINATION lib/pkgconfig)
 
 if(HMACCPP_BUILD_TESTS)
     enable_testing()

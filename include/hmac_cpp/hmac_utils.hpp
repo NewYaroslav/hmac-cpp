@@ -76,6 +76,7 @@ namespace hmac_cpp {
   
     /// PBKDF2 Security Notes:
     /// - Use a random salt of at least 16 bytes and never reuse it.
+    /// - PBKDF2 is CPU-bound; prefer Argon2 or scrypt for user passwords when available.
     /// - Choose iterations so the derivation takes about 200–500 ms on 2025 hardware.
     /// - Store {salt, iterations} with the ciphertext or hash; these values are public.
     /// - Salts and iteration counts must be unique per password.

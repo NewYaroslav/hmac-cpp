@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: hmac_cpp
+Description: HMAC/PBKDF2/HKDF library
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lhmac_cpp
+Cflags: -I${includedir}
