@@ -110,6 +110,21 @@ namespace hmac_cpp {
             uint32_t iterations, size_t dk_len,
             Pbkdf2Hash prf = Pbkdf2Hash::Sha256);
 
+    /// \brief Derives a key into a page-locked secure buffer using PBKDF2
+    /// \param password_ptr Pointer to the password buffer
+    /// \param password_len Length of the password in bytes
+    /// \param salt_ptr Pointer to the salt buffer
+    /// \param salt_len Length of the salt in bytes
+    /// \param iterations Number of iterations, must be positive
+    /// \param dk_len Desired length of the derived key in bytes, must be positive
+    /// \param prf Hash function to use (SHA1, SHA256, SHA512)
+    /// \return Derived key as a page-locked secure buffer
+    HMAC_CPP_API secure_buffer<uint8_t, true> pbkdf2_secure(
+            const void* password_ptr, size_t password_len,
+            const void* salt_ptr, size_t salt_len,
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf = Pbkdf2Hash::Sha256);
+
     /// \brief Derive key using PBKDF2 from vector-based password and salt.
     /// \tparam T Byte type; must be char or uint8_t.
     /// \param password Password bytes.

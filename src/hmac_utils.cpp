@@ -102,13 +102,13 @@ namespace hmac_cpp {
             salt_block[salt_len + 2] = static_cast<uint8_t>((i >> 8) & 0xFF);
             salt_block[salt_len + 3] = static_cast<uint8_t>(i & 0xFF);
 
-            secure_buffer<uint8_t> u(std::move(get_hmac(password_ptr, password_len,
-                                                         salt_block.data(), salt_block.size(),
-                                                         hash_type)));
-            secure_buffer<uint8_t> t = u;
+            secure_buffer<uint8_t, true> u(std::move(get_hmac(password_ptr, password_len,
+                                                              salt_block.data(), salt_block.size(),
+                                                              hash_type)));
+            secure_buffer<uint8_t, true> t = u;
             for (uint32_t j = 1; j < iterations; ++j) {
-                u = secure_buffer<uint8_t>(get_hmac(password_ptr, password_len,
-                                                    u.data(), u.size(), hash_type));
+                u = secure_buffer<uint8_t, true>(get_hmac(password_ptr, password_len,
+                                                         u.data(), u.size(), hash_type));
                 for (size_t k = 0; k < t.size(); ++k) {
                     t[k] ^= u[k];
                 }
@@ -123,6 +123,20 @@ namespace hmac_cpp {
         }
         secure_zero(salt_block.data(), salt_block.size());
         return derived;
+    }
+
+    secure_buffer<uint8_t, true> pbkdf2_secure(
+            const void* password_ptr, size_t password_len,
+            const void* salt_ptr, size_t salt_len,
+            uint32_t iterations, size_t dk_len,
+            Pbkdf2Hash prf) {
+        auto derived = pbkdf2(password_ptr, password_len,
+                              salt_ptr, salt_len,
+                              iterations, dk_len, prf);
+        PageLockGuard lock(derived.data(), derived.size());
+        secure_buffer<uint8_t, true> out(std::move(derived));
+        lock.locked = false;
+        return out;
     }
 
     bool pbkdf2(Pbkdf2Hash prf,
@@ -175,8 +189,8 @@ namespace hmac_cpp {
             salt_block[salt_len + 2] = static_cast<uint8_t>((i >> 8) & 0xFF);
             salt_block[salt_len + 3] = static_cast<uint8_t>(i & 0xFF);
 
-            secure_buffer<uint8_t> u(hlen);
-            secure_buffer<uint8_t> t(hlen);
+            secure_buffer<uint8_t, true> u(hlen);
+            secure_buffer<uint8_t, true> t(hlen);
             HmacContext ctx(hash_type);
             ctx.init(password_ptr, password_len);
             ctx.update(salt_block.data(), salt_block.size());
@@ -221,7 +235,7 @@ namespace hmac_cpp {
             Pbkdf2Hash prf) {
         TypeHash hash_type = to_type_hash(prf);
         auto pwd_prime = get_hmac(pepper_ptr, pepper_len, password_ptr, password_len, hash_type);
-        secure_buffer<uint8_t> tmp(std::move(pwd_prime));
+        secure_buffer<uint8_t, true> tmp(std::move(pwd_prime));
         auto dk = pbkdf2(tmp.data(), tmp.size(), salt_ptr, salt_len, iterations, dk_len, prf);
         secure_zero(tmp.data(), tmp.size());
         return dk;
