@@ -53,10 +53,14 @@ Examples, tests, and benchmarks are OFF by default. Enable via:
 * `HMACCPP_BUILD_EXAMPLES`
 * `HMACCPP_BUILD_TESTS`
 * `HMACCPP_BUILD_BENCH`
+* `HMACCPP_ENABLE_MLOCK`
 
 The library builds **static** by default. Use `-DHMACCPP_BUILD_SHARED=ON`
 to produce a shared library. The `HMAC_CPP_API` macro is empty for static
 builds and controls symbol export/import for shared builds.
+
+`HMACCPP_ENABLE_MLOCK` toggles best-effort page locking via `mlock`/`VirtualLock`.
+Disable it if the platform lacks the necessary privileges.
 
 ### Build
 
@@ -282,7 +286,24 @@ hmac_cpp::base36_decode(b36, raw);
 
 Returned strings and buffers are not zeroized; if you store secrets, prefer
 `secure_buffer` and wipe explicitly. Zeroization is a best‑effort and may be
-removed by optimizations or the C++ runtime allocator.
+removed by optimizations or the C++ runtime allocator. For higher resistance to
+memory scans, use `secret_string` which obfuscates data in memory and optionally
+pins buffers in RAM.
+
+```cpp
+#include <hmac_cpp/secret.hpp>
+
+hmac_cpp::secret_string token("super-secret-token");
+
+token.with_plaintext([](const uint8_t* p, size_t n){
+    // p is only valid within this callback
+});
+
+// If needed (creates a copy):
+std::string plain = token.reveal_copy();
+
+token.clear();
+```
 
 ---
 

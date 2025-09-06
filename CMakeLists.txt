@@ -5,6 +5,7 @@ option(HMACCPP_BUILD_EXAMPLES "Build the example program" OFF)
 option(HMACCPP_BUILD_TESTS "Build the test suite" OFF)
 option(HMACCPP_BUILD_BENCH "Build benchmarks" OFF)
 option(HMACCPP_BUILD_SHARED "Build hmac_cpp as a shared library" OFF)
+option(HMACCPP_ENABLE_MLOCK "Pin secret buffers in RAM using mlock/VirtualLock" ON)
 
 if(HMACCPP_BUILD_SHARED)
     set(BUILD_SHARED_LIBS ON)
@@ -17,6 +18,7 @@ set(HMAC_SOURCES
     src/hmac.cpp
     src/hmac_utils.cpp
     src/encoding.cpp
+    src/memlock.cpp
 )
 
 set(HMAC_HEADERS
@@ -27,6 +29,8 @@ set(HMAC_HEADERS
     include/hmac_cpp/sha256.hpp
     include/hmac_cpp/sha512.hpp
     include/hmac_cpp/secure_buffer.hpp
+    include/hmac_cpp/memlock.hpp
+    include/hmac_cpp/secret.hpp
     include/hmac_cpp/encoding.hpp
     include/hmac_cpp/version.hpp
 )
@@ -42,6 +46,10 @@ if(BUILD_SHARED_LIBS)
     target_compile_definitions(hmac_cpp PRIVATE HMAC_CPP_BUILD)
 else()
     target_compile_definitions(hmac_cpp PUBLIC HMAC_CPP_STATIC)
+endif()
+
+if(HMACCPP_ENABLE_MLOCK)
+    target_compile_definitions(hmac_cpp PUBLIC HMAC_CPP_ENABLE_MLOCK)
 endif()
 
 if(MSVC)
@@ -70,6 +78,10 @@ endif()
       add_executable(example_encoding example_encoding.cpp)
       target_link_libraries(example_encoding PRIVATE hmac_cpp)
       target_include_directories(example_encoding PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+      add_executable(example_secret example_secret.cpp)
+      target_link_libraries(example_secret PRIVATE hmac_cpp)
+      target_include_directories(example_secret PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
   endif()
 
 include(CMakePackageConfigHelpers)

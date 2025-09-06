@@ -6,6 +6,7 @@
 #include <limits>
 #include <algorithm>
 #include <cstring>
+#include <random>
 
 namespace hmac_cpp {
  
@@ -24,6 +25,15 @@ namespace hmac_cpp {
     bool constant_time_equal(const uint8_t* a, size_t a_len,
                              const uint8_t* b, size_t b_len) {
         return constant_time_equals(a, a_len, b, b_len);
+    }
+
+    std::vector<uint8_t> random_bytes(size_t n) {
+        std::vector<uint8_t> out(n);
+        std::random_device rd;
+        for (size_t i = 0; i < n; ++i) {
+            out[i] = static_cast<uint8_t>(rd());
+        }
+        return out;
     }
 
     static TypeHash to_type_hash(Pbkdf2Hash prf) {

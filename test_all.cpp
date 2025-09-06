@@ -12,6 +12,7 @@
 #include "hmac_cpp/hmac.hpp"
 #include "hmac_cpp/hmac_utils.hpp"
 #include "hmac_cpp/encoding.hpp"
+#include "hmac_cpp/secret.hpp"
 
 static std::time_t mock_time_value = 0;
 static int mock_errno_value = 0;
@@ -747,6 +748,26 @@ TEST(EncodingPropertyTest, Base36LeadingZeros) {
         EXPECT_TRUE(hmac_cpp::base36_decode(enc, dec));
         EXPECT_EQ(dec, buf);
     }
+}
+
+TEST(SecretStringTest, BasicOperations) {
+    hmac_cpp::secret_string s("top-secret");
+    std::string out;
+    s.with_plaintext([&](const uint8_t* p, size_t n) {
+        out.assign(reinterpret_cast<const char*>(p), n);
+    });
+    EXPECT_EQ(out, "top-secret");
+    EXPECT_EQ(s.reveal_copy(), "top-secret");
+    s.clear();
+    EXPECT_TRUE(s.empty());
+    EXPECT_EQ(s.reveal_copy(), "");
+}
+
+TEST(SecretStringTest, MoveSemantics) {
+    hmac_cpp::secret_string a("abc");
+    hmac_cpp::secret_string b(std::move(a));
+    EXPECT_TRUE(a.empty());
+    EXPECT_EQ(b.reveal_copy(), "abc");
 }
 
 int main(int argc, char **argv) {
