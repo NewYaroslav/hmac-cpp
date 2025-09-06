@@ -30,7 +30,7 @@ jobs:
             mingw-w64-x86_64-make
       - name: Configure
         shell: msys2 {0}
-        run: cmake -S . -B build -DBUILD_TESTS=ON -DCMAKE_CXX_STANDARD=${{ matrix.std }}
+        run: cmake -S . -B build -DHMACCPP_BUILD_TESTS=ON -DCMAKE_CXX_STANDARD=${{ matrix.std }}
       - name: Build
         shell: msys2 {0}
         run: cmake --build build

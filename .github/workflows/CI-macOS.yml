@@ -26,7 +26,7 @@ jobs:
           brew uninstall --ignore-dependencies cmake || true
           brew install cmake
       - name: Configure
-        run: cmake -S . -B build -DBUILD_TESTS=ON -DCMAKE_CXX_STANDARD=${{ matrix.std }}
+        run: cmake -S . -B build -DHMACCPP_BUILD_TESTS=ON -DCMAKE_CXX_STANDARD=${{ matrix.std }}
       - name: Build
         run: cmake --build build
       - name: Run tests
@@ -42,7 +42,7 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.sh
           ./vcpkg/vcpkg install gtest
       - name: Configure
-        run: cmake -S . -B build -DBUILD_TESTS=ON -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
+        run: cmake -S . -B build -DHMACCPP_BUILD_TESTS=ON -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
       - name: Build
         run: cmake --build build
       - name: Run tests
