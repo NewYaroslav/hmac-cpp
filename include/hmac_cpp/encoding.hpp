@@ -27,14 +27,14 @@ namespace hmac_cpp {
                                            bool pad = true);
 
     /// \brief Base64-encode a vector.
-    inline std::string base64_encode(const std::vector<uint8_t>& v,
+    inline HMAC_CPP_API std::string base64_encode(const std::vector<uint8_t>& v,
                                      Base64Alphabet alphabet = Base64Alphabet::Standard,
                                      bool pad = true) {
         return base64_encode(v.data(), v.size(), alphabet, pad);
     }
 
     /// \brief Base64-encode a secure_buffer.
-    inline std::string base64_encode(const secure_buffer<uint8_t>& v,
+    inline HMAC_CPP_API std::string base64_encode(const secure_buffer<uint8_t>& v,
                                      Base64Alphabet alphabet = Base64Alphabet::Standard,
                                      bool pad = true) {
         return base64_encode(v.data(), v.size(), alphabet, pad);
@@ -73,12 +73,12 @@ namespace hmac_cpp {
                                            bool pad = true);
 
     /// \brief Base32-encode a vector.
-    inline std::string base32_encode(const std::vector<uint8_t>& v, bool pad = true) {
+    inline HMAC_CPP_API std::string base32_encode(const std::vector<uint8_t>& v, bool pad = true) {
         return base32_encode(v.data(), v.size(), pad);
     }
 
     /// \brief Base32-encode a secure_buffer.
-    inline std::string base32_encode(const secure_buffer<uint8_t>& v, bool pad = true) {
+    inline HMAC_CPP_API std::string base32_encode(const secure_buffer<uint8_t>& v, bool pad = true) {
         return base32_encode(v.data(), v.size(), pad);
     }
 
@@ -111,12 +111,12 @@ namespace hmac_cpp {
     HMAC_CPP_API std::string base36_encode(const uint8_t* data, size_t len);
 
     /// \brief Base36-encode a vector.
-    inline std::string base36_encode(const std::vector<uint8_t>& v) {
+    inline HMAC_CPP_API std::string base36_encode(const std::vector<uint8_t>& v) {
         return base36_encode(v.data(), v.size());
     }
 
     /// \brief Base36-encode a secure_buffer.
-    inline std::string base36_encode(const secure_buffer<uint8_t>& v) {
+    inline HMAC_CPP_API std::string base36_encode(const secure_buffer<uint8_t>& v) {
         return base36_encode(v.data(), v.size());
     }
 

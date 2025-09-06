@@ -255,15 +255,34 @@ bool v2 = hmac::is_token_valid(t2, secret_key, fingerprint, 60);
 
 `hmac_cpp::encoding` provides simple conversions:
 
-* **Base64** — standard `+/` and URL-safe `-_` alphabets; optional `strict` mode
-  (rejects whitespace and mixed padding) and ability to decode without `=`.
-* **Base32** — RFC 4648 alphabet `A–Z2–7`; encoder outputs upper-case, decoder
-  accepts lower-case and ignores spaces/CR/LF when `strict=false`.
-* **Base36** — non-standard human-readable IDs using `0–9A–Z`; keeps leading
-  zero bytes by prefixing `'0'` and maps a single `\x00` to "0".
+* **Base64** — standard `+/` and URL-safe `-_` alphabets; `pad=true/false` toggles
+  `=` padding. `strict=true` rejects whitespace, mixed padding and `+`/`/` when
+  using the URL alphabet; `strict=false` ignores ASCII spaces, accepts these
+  aliases and tolerates missing padding.
+* **Base32** — RFC 4648 alphabet `A–Z2–7`; encoder emits upper-case. Decoder
+  with `strict=true` requires `=` padding and upper-case; with `strict=false`
+  it tolerates lower-case and whitespace.
+* **Base36** — human‑friendly IDs using `0–9A–Z`; not a cryptographic format.
+  Leading zero bytes are preserved (e.g. `{0,0,1}` → `"001"`).
+
+#### Encoding
+
+```cpp
+std::string b64 = hmac_cpp::base64_encode(buf.data(), buf.size(),
+    hmac_cpp::Base64Alphabet::Url, /*pad=*/false);
+hmac_cpp::base64_decode(b64, raw, hmac_cpp::Base64Alphabet::Url,
+    /*require_padding=*/false, /*strict=*/true);
+
+std::string b32 = hmac_cpp::base32_encode(buf.data(), buf.size(), /*pad=*/true);
+hmac_cpp::base32_decode(b32, raw, /*require_padding=*/true, /*strict=*/false);
+
+std::string b36 = hmac_cpp::base36_encode(buf.data(), buf.size());
+hmac_cpp::base36_decode(b36, raw);
+```
 
 Returned strings and buffers are not zeroized; if you store secrets, prefer
-`secure_buffer` and wipe explicitly.
+`secure_buffer` and wipe explicitly. Zeroization is a best‑effort and may be
+removed by optimizations or the C++ runtime allocator.
 
 ---
 

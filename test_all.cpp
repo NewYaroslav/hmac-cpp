@@ -617,7 +617,7 @@ TEST(EncodingTest, Base64Vectors) {
     std::vector<uint8_t> out;
     EXPECT_TRUE(hmac_cpp::base64_decode("Zg", out, hmac_cpp::Base64Alphabet::Standard, false, false));
     EXPECT_EQ(out, std::vector<uint8_t>({'f'}));
-    EXPECT_TRUE(hmac_cpp::base64_decode("+__/", out, hmac_cpp::Base64Alphabet::Url));
+    EXPECT_TRUE(hmac_cpp::base64_decode("+__/", out, hmac_cpp::Base64Alphabet::Url, false, false));
     EXPECT_EQ(out, std::vector<uint8_t>({0xfb,0xff,0xff}));
 }
 
@@ -675,6 +675,73 @@ TEST(EncodingTest, Base36Vectors) {
     for (int len = 0; len < 16; ++len) {
         std::vector<uint8_t> buf(len);
         for (int i = 0; i < len; ++i) buf[i] = static_cast<uint8_t>(dist(rng));
+        std::string enc = hmac_cpp::base36_encode(buf.data(), buf.size());
+        std::vector<uint8_t> dec;
+        EXPECT_TRUE(hmac_cpp::base36_decode(enc, dec));
+        EXPECT_EQ(dec, buf);
+    }
+}
+
+TEST(EncodingPropertyTest, Base64RoundTrip) {
+    std::mt19937 rng(123);
+    std::uniform_int_distribution<int> len_dist(0,64);
+    for (int i = 0; i < 50; ++i) {
+        int len = len_dist(rng);
+        std::vector<uint8_t> buf(len);
+        for (int j = 0; j < len; ++j) buf[j] = static_cast<uint8_t>(rng());
+        for (auto alpha : {hmac_cpp::Base64Alphabet::Standard, hmac_cpp::Base64Alphabet::Url}) {
+            for (bool pad : {true, false}) {
+                std::string enc = hmac_cpp::base64_encode(buf.data(), buf.size(), alpha, pad);
+                std::vector<uint8_t> dec;
+                EXPECT_TRUE(hmac_cpp::base64_decode(enc, dec, alpha, pad, true));
+                EXPECT_EQ(dec, buf);
+                std::string re = hmac_cpp::base64_encode(dec.data(), dec.size(), alpha, pad);
+                EXPECT_EQ(re, enc);
+            }
+        }
+    }
+}
+
+TEST(EncodingPropertyTest, Base64StrictRejects) {
+    std::vector<uint8_t> out;
+    EXPECT_FALSE(hmac_cpp::base64_decode("+__/", out, hmac_cpp::Base64Alphabet::Url, false, true));
+    EXPECT_FALSE(hmac_cpp::base64_decode("AAAAA", out, hmac_cpp::Base64Alphabet::Standard, false, true));
+}
+
+TEST(EncodingPropertyTest, Base32RoundTrip) {
+    std::mt19937 rng(321);
+    std::uniform_int_distribution<int> len_dist(0,40);
+    for (int i = 0; i < 50; ++i) {
+        int len = len_dist(rng);
+        std::vector<uint8_t> buf(len);
+        for (int j = 0; j < len; ++j) buf[j] = static_cast<uint8_t>(rng());
+        for (bool pad : {true, false}) {
+            std::string enc = hmac_cpp::base32_encode(buf.data(), buf.size(), pad);
+            std::vector<uint8_t> dec;
+            EXPECT_TRUE(hmac_cpp::base32_decode(enc, dec, pad, true));
+            EXPECT_EQ(dec, buf);
+            std::string re = hmac_cpp::base32_encode(dec.data(), dec.size(), pad);
+            EXPECT_EQ(re, enc);
+        }
+    }
+}
+
+TEST(EncodingPropertyTest, Base32RejectsInvalid) {
+    std::vector<uint8_t> out;
+    EXPECT_FALSE(hmac_cpp::base32_decode("A", out));
+    EXPECT_FALSE(hmac_cpp::base32_decode("AAA", out));
+    EXPECT_FALSE(hmac_cpp::base32_decode("AAAAAA", out));
+    EXPECT_FALSE(hmac_cpp::base32_decode("MZX=====MZXW6===", out));
+}
+
+TEST(EncodingPropertyTest, Base36LeadingZeros) {
+    std::mt19937 rng(777);
+    std::uniform_int_distribution<int> len_dist(0,10);
+    for (int i = 0; i < 20; ++i) {
+        int zeros = len_dist(rng) % 5;
+        int data_len = len_dist(rng);
+        std::vector<uint8_t> buf(zeros + data_len);
+        for (int j = 0; j < data_len; ++j) buf[zeros + j] = static_cast<uint8_t>(rng());
         std::string enc = hmac_cpp::base36_encode(buf.data(), buf.size());
         std::vector<uint8_t> dec;
         EXPECT_TRUE(hmac_cpp::base36_decode(enc, dec));
