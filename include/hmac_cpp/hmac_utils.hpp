@@ -473,6 +473,22 @@ namespace hmac_cpp {
         return hkdf_extract_sha256(ikm.data(), ikm.size(), salt.data(), salt.size());
     }
 
+    HMAC_CPP_API secure_buffer<uint8_t, true> hkdf_extract_sha256_secure(
+            const void* ikm_ptr, size_t ikm_len,
+            const void* salt_ptr, size_t salt_len);
+
+    inline secure_buffer<uint8_t, true> hkdf_extract_sha256_secure(
+            const secure_buffer<uint8_t>& ikm,
+            const secure_buffer<uint8_t>& salt) {
+        return hkdf_extract_sha256_secure(ikm.data(), ikm.size(), salt.data(), salt.size());
+    }
+
+    inline secure_buffer<uint8_t, true> hkdf_extract_sha256_secure(
+            const std::vector<uint8_t>& ikm,
+            const std::vector<uint8_t>& salt) {
+        return hkdf_extract_sha256_secure(ikm.data(), ikm.size(), salt.data(), salt.size());
+    }
+
     /// \brief HKDF expand step using SHA-256.
     /// \param prk_ptr Pointer to the pseudorandom key.
     /// \param prk_len Length of the pseudorandom key.
@@ -495,6 +511,25 @@ namespace hmac_cpp {
             const std::vector<uint8_t>& info,
             size_t L) {
         return hkdf_expand_sha256(prk.data(), prk.size(), info.data(), info.size(), L);
+    }
+
+    HMAC_CPP_API secure_buffer<uint8_t, true> hkdf_expand_sha256_secure(
+            const void* prk_ptr, size_t prk_len,
+            const void* info_ptr, size_t info_len,
+            size_t L);
+
+    inline secure_buffer<uint8_t, true> hkdf_expand_sha256_secure(
+            const secure_buffer<uint8_t>& prk,
+            const secure_buffer<uint8_t>& info,
+            size_t L) {
+        return hkdf_expand_sha256_secure(prk.data(), prk.size(), info.data(), info.size(), L);
+    }
+
+    inline secure_buffer<uint8_t, true> hkdf_expand_sha256_secure(
+            const std::vector<uint8_t>& prk,
+            const std::vector<uint8_t>& info,
+            size_t L) {
+        return hkdf_expand_sha256_secure(prk.data(), prk.size(), info.data(), info.size(), L);
     }
 
     /// \brief Holds a 32-byte key and 12-byte IV produced by HKDF.
@@ -521,6 +556,12 @@ namespace hmac_cpp {
     /// \return Derived key and IV.
     inline KeyIv hkdf_key_iv_256(const std::vector<uint8_t>& ikm,
                                  const std::vector<uint8_t>& salt,
+                                 const std::string& context) {
+        return hkdf_key_iv_256(ikm.data(), ikm.size(), salt.data(), salt.size(), context);
+    }
+
+    inline KeyIv hkdf_key_iv_256(const secure_buffer<uint8_t>& ikm,
+                                 const secure_buffer<uint8_t>& salt,
                                  const std::string& context) {
         return hkdf_key_iv_256(ikm.data(), ikm.size(), salt.data(), salt.size(), context);
     }

@@ -241,7 +241,7 @@ namespace hmac_cpp {
         return dk;
     }
 
-    std::vector<uint8_t> hkdf_extract_sha256(
+    secure_buffer<uint8_t, true> hkdf_extract_sha256_secure(
             const void* ikm_ptr, size_t ikm_len,
             const void* salt_ptr, size_t salt_len) {
         std::vector<uint8_t> salt_buf;
@@ -250,11 +250,19 @@ namespace hmac_cpp {
             salt_ptr = salt_buf.data();
             salt_len = salt_buf.size();
         }
-        auto prk = get_hmac(salt_ptr, salt_len, ikm_ptr, ikm_len, TypeHash::SHA256);
+        secure_buffer<uint8_t, true> prk(
+                get_hmac(salt_ptr, salt_len, ikm_ptr, ikm_len, TypeHash::SHA256));
         return prk;
     }
 
-    std::vector<uint8_t> hkdf_expand_sha256(
+    std::vector<uint8_t> hkdf_extract_sha256(
+            const void* ikm_ptr, size_t ikm_len,
+            const void* salt_ptr, size_t salt_len) {
+        auto prk = hkdf_extract_sha256_secure(ikm_ptr, ikm_len, salt_ptr, salt_len);
+        return std::vector<uint8_t>(prk.begin(), prk.end());
+    }
+
+    secure_buffer<uint8_t, true> hkdf_expand_sha256_secure(
             const void* prk_ptr, size_t prk_len,
             const void* info_ptr, size_t info_len,
             size_t L) {
@@ -264,21 +272,25 @@ namespace hmac_cpp {
         if (L > 255 * HashLen)
             throw std::invalid_argument("HKDF: L too large");
 
-        std::vector<uint8_t> okm;
-        okm.reserve(L);
-        std::vector<uint8_t> previous;
+        secure_buffer<uint8_t, true> okm(L);
+        secure_buffer<uint8_t, true> previous;
         size_t n = (L + HashLen - 1) / HashLen;
+        size_t offset = 0;
         for (size_t i = 1; i <= n; ++i) {
-            std::vector<uint8_t> input(previous.begin(), previous.end());
-            if (info_ptr && info_len)
-                input.insert(input.end(),
-                             reinterpret_cast<const uint8_t*>(info_ptr),
-                             reinterpret_cast<const uint8_t*>(info_ptr) + info_len);
-            input.push_back(static_cast<uint8_t>(i));
-            auto t = get_hmac(prk_ptr, prk_len, input.data(), input.size(), TypeHash::SHA256);
-            size_t take = (i == n) ? (L - okm.size()) : t.size();
-            okm.insert(okm.end(), t.begin(), t.begin() + take);
-            previous.assign(t.begin(), t.end());
+            size_t info_bytes = (info_ptr && info_len) ? info_len : 0;
+            size_t input_len = previous.size() + info_bytes + 1;
+            secure_buffer<uint8_t, true> input(input_len);
+            if (previous.size())
+                std::memcpy(input.data(), previous.data(), previous.size());
+            if (info_bytes)
+                std::memcpy(input.data() + previous.size(), info_ptr, info_len);
+            input[input_len - 1] = static_cast<uint8_t>(i);
+            secure_buffer<uint8_t, true> t(
+                    get_hmac(prk_ptr, prk_len, input.data(), input.size(), TypeHash::SHA256));
+            size_t take = (i == n) ? (L - offset) : t.size();
+            std::memcpy(okm.data() + offset, t.data(), take);
+            offset += take;
+            previous = t;
             secure_zero(t.data(), t.size());
             secure_zero(input.data(), input.size());
         }
@@ -286,12 +298,20 @@ namespace hmac_cpp {
         return okm;
     }
 
+    std::vector<uint8_t> hkdf_expand_sha256(
+            const void* prk_ptr, size_t prk_len,
+            const void* info_ptr, size_t info_len,
+            size_t L) {
+        auto okm = hkdf_expand_sha256_secure(prk_ptr, prk_len, info_ptr, info_len, L);
+        return std::vector<uint8_t>(okm.begin(), okm.end());
+    }
+
     KeyIv hkdf_key_iv_256(const void* ikm_ptr, size_t ikm_len,
                           const void* salt_ptr, size_t salt_len,
                           const std::string& context) {
-        auto prk = hkdf_extract_sha256(ikm_ptr, ikm_len, salt_ptr, salt_len);
-        auto okm = hkdf_expand_sha256(prk.data(), prk.size(),
-                                      context.data(), context.size(), 44);
+        auto prk = hkdf_extract_sha256_secure(ikm_ptr, ikm_len, salt_ptr, salt_len);
+        auto okm = hkdf_expand_sha256_secure(prk.data(), prk.size(),
+                                             context.data(), context.size(), 44);
         KeyIv out{};
         std::copy(okm.begin(), okm.begin() + 32, out.key.begin());
         std::copy(okm.begin() + 32, okm.begin() + 44, out.iv.begin());
