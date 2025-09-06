@@ -29,6 +29,10 @@ static inline void b64_build_reverse(Base64Alphabet a, int8_t rev[256]) {
     for (int i = 0; i < 64; ++i) {
         rev[ static_cast<unsigned char>(alpha[i]) ] = static_cast<int8_t>(i);
     }
+    if (a == Base64Alphabet::Url) {
+        rev[ static_cast<unsigned char>('+') ] = 62;
+        rev[ static_cast<unsigned char>('/') ] = 63;
+    }
     rev[ static_cast<unsigned char>('=') ] = -2; // padding marker
 }
 
@@ -459,6 +463,107 @@ bool base32_decode(const std::string& in, secure_buffer<uint8_t>& out,
                    bool require_padding, bool strict) noexcept {
     std::vector<uint8_t> tmp;
     bool ok = base32_decode(in, tmp, require_padding, strict);
+    if (!ok) {
+        out = secure_buffer<uint8_t>();
+        return false;
+    }
+    out = secure_buffer<uint8_t>(tmp.size());
+    if (out.size() != tmp.size()) {
+        if (!tmp.empty()) std::memset(tmp.data(), 0, tmp.size());
+        out = secure_buffer<uint8_t>();
+        return false;
+    }
+    std::memcpy(out.data(), tmp.data(), tmp.size());
+    if (!tmp.empty()) std::memset(tmp.data(), 0, tmp.size());
+    return true;
+}
+
+// ======================
+// Base36
+// ======================
+
+static inline const char* b36_alphabet() {
+    return "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+}
+
+std::string base36_encode(const uint8_t* data, size_t len) {
+    if (len == 0) return std::string();
+    if (len == 1 && data[0] == 0) return std::string("0");
+
+    size_t zeros = 0;
+    while (zeros < len && data[zeros] == 0) ++zeros;
+
+    std::vector<uint8_t> tmp(data + zeros, data + len);
+    std::string out;
+
+    while (!tmp.empty()) {
+        uint32_t carry = 0;
+        std::vector<uint8_t> next;
+        next.reserve(tmp.size());
+        for (size_t i = 0; i < tmp.size(); ++i) {
+            uint32_t cur = (carry << 8) | tmp[i];
+            uint8_t div = static_cast<uint8_t>(cur / 36);
+            carry = cur % 36;
+            if (!next.empty() || div != 0) next.push_back(div);
+        }
+        out.push_back(b36_alphabet()[carry]);
+        tmp = std::move(next);
+    }
+
+    if (out.empty()) out.push_back('0');
+    std::reverse(out.begin(), out.end());
+    out.insert(0, zeros, '0');
+    return out;
+}
+
+bool base36_decode(const std::string& in, std::vector<uint8_t>& out) noexcept {
+    out.clear();
+    if (in.empty()) return true;
+
+    bool all_zero = true;
+    for (size_t i = 0; i < in.size(); ++i) {
+        if (in[i] != '0') { all_zero = false; break; }
+    }
+    if (all_zero) {
+        if (in.size() == 1) out.push_back(0);
+        else out.assign(in.size() - 1, 0);
+        return true;
+    }
+
+    size_t zeros = 0;
+    while (zeros < in.size() && in[zeros] == '0') ++zeros;
+
+    std::vector<uint8_t> b256(1, 0);
+    for (size_t i = zeros; i < in.size(); ++i) {
+        unsigned char c = static_cast<unsigned char>(in[i]);
+        int val;
+        if (c >= '0' && c <= '9') val = c - '0';
+        else if (c >= 'A' && c <= 'Z') val = c - 'A' + 10;
+        else if (c >= 'a' && c <= 'z') val = c - 'a' + 10;
+        else return false;
+
+        int carry = val;
+        for (size_t j = b256.size(); j-- > 0;) {
+            int cur = b256[j] * 36 + carry;
+            b256[j] = static_cast<uint8_t>(cur & 0xFF);
+            carry = cur >> 8;
+        }
+        while (carry > 0) {
+            b256.insert(b256.begin(), static_cast<uint8_t>(carry & 0xFF));
+            carry >>= 8;
+        }
+    }
+
+    size_t start = 0;
+    while (start < b256.size() && b256[start] == 0) ++start;
+    out.assign(zeros, 0);
+    out.insert(out.end(), b256.begin() + start, b256.end());
+    return true;
+}
+
+bool base36_decode(const std::string& in, secure_buffer<uint8_t>& out) noexcept {
+    std::vector<uint8_t> tmp;
+    bool ok = base36_decode(in, tmp);
     if (!ok) {
         out = secure_buffer<uint8_t>();
         return false;

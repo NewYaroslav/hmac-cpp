@@ -592,6 +592,7 @@ TEST(TotpTimeErrorTest, ValidityNegativeTimeThrows) {
 
 TEST(EncodingTest, Base64Vectors) {
     std::vector<std::pair<std::string,std::string>> cases = {
+        {"", ""},
         {"f", "Zg=="},
         {"fo", "Zm8="},
         {"foo", "Zm9v"},
@@ -613,6 +614,16 @@ TEST(EncodingTest, Base64Vectors) {
     EXPECT_TRUE(hmac_cpp::base64_decode("Zm9v", sec));
     std::string foo(sec.begin(), sec.end());
     EXPECT_EQ(foo, "foo");
+    std::vector<uint8_t> out;
+    EXPECT_TRUE(hmac_cpp::base64_decode("Zg", out, hmac_cpp::Base64Alphabet::Standard, false, false));
+    EXPECT_EQ(out, std::vector<uint8_t>({'f'}));
+    EXPECT_TRUE(hmac_cpp::base64_decode("+__/", out, hmac_cpp::Base64Alphabet::Url));
+    EXPECT_EQ(out, std::vector<uint8_t>({0xfb,0xff,0xff}));
+}
+
+TEST(EncodingTest, Base64RejectsInvalid) {
+    std::vector<uint8_t> out;
+    EXPECT_FALSE(hmac_cpp::base64_decode("Zm9v$", out));
 }
 
 TEST(EncodingTest, Base32Vectors) {
@@ -635,6 +646,40 @@ TEST(EncodingTest, Base32Vectors) {
     EXPECT_TRUE(hmac_cpp::base32_decode("MZXW6===", sec, true));
     std::string foo(sec.begin(), sec.end());
     EXPECT_EQ(foo, "foo");
+}
+
+TEST(EncodingTest, Base32CaseWhitespace) {
+    std::vector<uint8_t> out;
+    EXPECT_TRUE(hmac_cpp::base32_decode("my======", out, true, false));
+    EXPECT_EQ(out, std::vector<uint8_t>({'f'}));
+    EXPECT_TRUE(hmac_cpp::base32_decode("MY", out, false, false));
+    EXPECT_EQ(out, std::vector<uint8_t>({'f'}));
+    EXPECT_TRUE(hmac_cpp::base32_decode("MZXW6YTBOI======", out));
+    EXPECT_EQ(std::string(out.begin(), out.end()), "foobar");
+    EXPECT_TRUE(hmac_cpp::base32_decode("MZXW6 YTBO I======", out, true, false));
+    EXPECT_EQ(std::string(out.begin(), out.end()), "foobar");
+}
+
+TEST(EncodingTest, Base36Vectors) {
+    std::vector<uint8_t> z2 = {0x00, 0x00};
+    EXPECT_EQ(hmac_cpp::base36_encode(z2.data(), z2.size()), "000");
+    std::vector<uint8_t> out;
+    EXPECT_TRUE(hmac_cpp::base36_decode("000", out));
+    EXPECT_EQ(out, z2);
+    std::vector<uint8_t> one = {0x01};
+    EXPECT_EQ(hmac_cpp::base36_encode(one.data(), one.size()), "1");
+    EXPECT_TRUE(hmac_cpp::base36_decode("1", out));
+    EXPECT_EQ(out, one);
+    std::mt19937 rng(0);
+    std::uniform_int_distribution<int> dist(0,255);
+    for (int len = 0; len < 16; ++len) {
+        std::vector<uint8_t> buf(len);
+        for (int i = 0; i < len; ++i) buf[i] = static_cast<uint8_t>(dist(rng));
+        std::string enc = hmac_cpp::base36_encode(buf.data(), buf.size());
+        std::vector<uint8_t> dec;
+        EXPECT_TRUE(hmac_cpp::base36_decode(enc, dec));
+        EXPECT_EQ(dec, buf);
+    }
 }
 
 int main(int argc, char **argv) {

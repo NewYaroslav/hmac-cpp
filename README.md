@@ -251,6 +251,22 @@ bool v2 = hmac::is_token_valid(t2, secret_key, fingerprint, 60);
 
 ---
 
+### Encoding helpers
+
+`hmac_cpp::encoding` provides simple conversions:
+
+* **Base64** — standard `+/` and URL-safe `-_` alphabets; optional `strict` mode
+  (rejects whitespace and mixed padding) and ability to decode without `=`.
+* **Base32** — RFC 4648 alphabet `A–Z2–7`; encoder outputs upper-case, decoder
+  accepts lower-case and ignores spaces/CR/LF when `strict=false`.
+* **Base36** — non-standard human-readable IDs using `0–9A–Z`; keeps leading
+  zero bytes by prefixing `'0'` and maps a single `\x00` to "0".
+
+Returned strings and buffers are not zeroized; if you store secrets, prefer
+`secure_buffer` and wipe explicitly.
+
+---
+
 ## 📦 MQL5 Compatibility
 
 Repository provides `sha256.mqh`, `sha512.mqh`, `hmac.mqh`, `hmac_utils.mqh` (MetaTrader 5).
