@@ -141,6 +141,21 @@ secure_buffer key(std::move(secret_string)); // обнуляет перемещ�
 auto mac = hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
 ```
 
+Для дополнительной защиты в памяти можно использовать `hmac_cpp::secret_string`, который
+обфусцирует данные и по возможности закрепляет их в RAM:
+
+```cpp
+#include <hmac_cpp/secret.hpp>
+
+hmac_cpp::secret_string token("super-secret-token");
+
+token.with_plaintext([](const uint8_t* p, size_t n){
+    // p действует только внутри коллбэка
+});
+
+token.clear();
+```
+
 ### HMAC (сырой буфер)
 
 ```cpp
