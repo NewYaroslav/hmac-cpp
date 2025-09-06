@@ -255,21 +255,21 @@ bool v2 = hmac::is_token_valid(t2, secret_key, fingerprint, 60);
 
 ---
 
-### Encoding helpers
+### Encoding utilities
 
 `hmac_cpp::encoding` provides simple conversions:
 
-* **Base64** — standard `+/` and URL-safe `-_` alphabets; `pad=true/false` toggles
-  `=` padding. `strict=true` rejects whitespace, mixed padding and `+`/`/` when
-  using the URL alphabet; `strict=false` ignores ASCII spaces, accepts these
+* **Base64** (RFC 4648)—standard `+/` and URL-safe `-_` alphabets; `pad=true/false`
+  toggles `=` padding. `strict=true` rejects whitespace, mixed padding and `+`/`/`
+  when using the URL alphabet; `strict=false` ignores ASCII spaces, accepts these
   aliases and tolerates missing padding.
-* **Base32** — RFC 4648 alphabet `A–Z2–7`; encoder emits upper-case. Decoder
-  with `strict=true` requires `=` padding and upper-case; with `strict=false`
-  it tolerates lower-case and whitespace.
-* **Base36** — human‑friendly IDs using `0–9A–Z`; not a cryptographic format.
+* **Base32** (RFC 4648)—alphabet `A–Z2–7`; encoder emits upper-case. Decoder with
+  `strict=true` requires `=` padding and upper-case; with `strict=false` it tolerates
+  lower-case and whitespace.
+* **Base36**—fixed 2-char/byte scheme using `0–9A–Z`; not a cryptographic format.
   Leading zero bytes are preserved (e.g. `{0,0,1}` → `"001"`).
 
-#### Encoding
+#### Example
 
 ```cpp
 std::string b64 = hmac_cpp::base64_encode(buf.data(), buf.size(),
@@ -283,28 +283,6 @@ hmac_cpp::base32_decode(b32, raw, /*require_padding=*/true, /*strict=*/false);
 std::string b36 = hmac_cpp::base36_encode(buf.data(), buf.size());
 hmac_cpp::base36_decode(b36, raw);
 ```
-
-Returned strings and buffers are not zeroized; if you store secrets, prefer
-`secure_buffer` and wipe explicitly. Zeroization is a best‑effort and may be
-removed by optimizations or the C++ runtime allocator. For higher resistance to
-memory scans, use `secret_string` which obfuscates data in memory and optionally
-pins buffers in RAM.
-
-```cpp
-#include <hmac_cpp/secret.hpp>
-
-hmac_cpp::secret_string token("super-secret-token");
-
-token.with_plaintext([](const uint8_t* p, size_t n){
-    // p is only valid within this callback
-});
-
-// If needed (creates a copy):
-std::string plain = token.reveal_copy();
-
-token.clear();
-```
-
 ---
 
 ## 📦 MQL5 Compatibility
@@ -384,6 +362,13 @@ MSVC:
 ```bat
 cl /EHsc example.cpp /I _install\include /link /LIBPATH:_install\lib hmac_cpp.lib
 ```
+
+---
+
+## 🔒 Security notes
+
+`secure_buffer` wipes its memory on destruction. It does not page‑lock buffers,
+provide guard pages, or mitigate neighboring memory attacks.
 
 ---
 
