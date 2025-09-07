@@ -146,7 +146,7 @@ For additional protection in memory, `hmac_cpp::secret_string` obfuscates
 the data and tries to keep it locked in RAM:
 
 ```cpp
-#include <hmac_cpp/secret.hpp>
+#include <hmac_cpp/secret_string.hpp>
 
 hmac_cpp::secret_string token("super-secret-token");
 
