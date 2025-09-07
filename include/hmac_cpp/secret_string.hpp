@@ -1,5 +1,5 @@
-#ifndef HMAC_CPP_SECRET_HPP_INCLUDED
-#define HMAC_CPP_SECRET_HPP_INCLUDED
+#ifndef HMAC_CPP_SECRET_STRING_HPP_INCLUDED
+#define HMAC_CPP_SECRET_STRING_HPP_INCLUDED
 
 #include <vector>
 #include <array>
@@ -270,4 +270,4 @@ private:
 
 } // namespace hmac_cpp
 
-#endif // HMAC_CPP_SECRET_HPP_INCLUDED
+#endif // HMAC_CPP_SECRET_STRING_HPP_INCLUDED

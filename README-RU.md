@@ -145,7 +145,7 @@ auto mac = hmac::get_hmac(key, payload, hmac::TypeHash::SHA256);
 обфусцирует данные и по возможности закрепляет их в RAM:
 
 ```cpp
-#include <hmac_cpp/secret.hpp>
+#include <hmac_cpp/secret_string.hpp>
 
 hmac_cpp::secret_string token("super-secret-token");
 

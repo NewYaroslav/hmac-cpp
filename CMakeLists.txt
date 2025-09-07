@@ -30,7 +30,7 @@ set(HMAC_HEADERS
     include/hmac_cpp/sha512.hpp
     include/hmac_cpp/secure_buffer.hpp
     include/hmac_cpp/memlock.hpp
-    include/hmac_cpp/secret.hpp
+    include/hmac_cpp/secret_string.hpp
     include/hmac_cpp/encoding.hpp
     include/hmac_cpp/version.hpp
 )

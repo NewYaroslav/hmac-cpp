@@ -1,5 +1,5 @@
 #include <iostream>
-#include <hmac_cpp/secret.hpp>
+#include <hmac_cpp/secret_string.hpp>
 
 int main() {
     hmac_cpp::secret_string token("super-secret-token");
