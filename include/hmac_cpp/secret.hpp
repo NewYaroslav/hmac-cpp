@@ -17,12 +17,22 @@
 
 namespace hmac_cpp {
 
+/// \brief Best-effort in-memory obfuscation for sensitive strings.
+///
+/// The plaintext is encrypted with a per-instance random nonce using
+/// HMAC-SHA256 as a stream cipher keyed by a process-wide secret stored in
+/// locked memory. The class aims to reduce accidental exposure but does not
+/// protect against an attacker with full access to the process memory. Each
+/// instance uses a unique nonce and the class itself is not thread safe.
+/// Memory locking is best-effort and may fail without required privileges.
 class secret_string {
 public:
     secret_string() : nonce_(), locked_(false) {}
 
     explicit secret_string(const std::string& s) : nonce_(), locked_(false) { set(s); }
     explicit secret_string(const uint8_t* p, size_t n) : nonce_(), locked_(false) { set(p, n); }
+    explicit secret_string(const secure_buffer<uint8_t>& s) : nonce_(), locked_(false) { set(s); }
+    explicit secret_string(secure_buffer<uint8_t>&& s) : nonce_(), locked_(false) { set(std::move(s)); }
 
     secret_string(secret_string&& other) noexcept { move_from(other); }
     secret_string& operator=(secret_string&& other) noexcept {
@@ -43,7 +53,6 @@ public:
                 locked_ = false;
             }
             ct_.clear();
-            ct_.shrink_to_fit();
         }
         secure_zero(nonce_.data(), nonce_.size());
     }
@@ -52,34 +61,42 @@ public:
     size_t size() const noexcept { return ct_.size(); }
 
     void set(const std::string& s) { set(reinterpret_cast<const uint8_t*>(s.data()), s.size()); }
+    void set(const secure_buffer<uint8_t>& s) { set(s.data(), s.size()); }
+    void set(secure_buffer<uint8_t>&& s) {
+        set(s.data(), s.size());
+        if (s.size()) {
+            secure_zero(s.data(), s.size());
+        }
+    }
 
     void set(const uint8_t* p, size_t n) {
-        if (n > 0 && p == NULL) throw std::invalid_argument("secret_string::set: null data with non-zero length");
+        if (n && !p) throw std::invalid_argument("secret_string::set: null data");
         clear();
 
-        std::vector<uint8_t> rnd = hmac_cpp::random_bytes(12);
+        auto rnd = hmac_cpp::random_bytes(12);
         std::copy(rnd.begin(), rnd.end(), nonce_.begin());
 
-        ct_.assign(p, p + n);
+        ct_.resize(n);
+        if (n) locked_ = lock_pages(ct_.data(), ct_.size());
 
-        if (!ct_.empty()) {
-            locked_ = lock_pages(ct_.data(), ct_.size());
-        }
-
-        xor_keystream_inplace(ct_.data(), ct_.size(), nonce_.data());
+        xor_keystream_copy_inplace(ct_.data(), p, n, nonce_.data());
     }
 
     bool with_plaintext(const std::function<void(const uint8_t*, size_t)>& fn) const {
-        std::vector<uint8_t> subkey = hmac_cpp::get_hmac(process_key().data(), process_key().size(),
-                                                         nonce_.data(), nonce_.size(),
-                                                         hmac_cpp::TypeHash::SHA256);
+        uint8_t subkey[32];
+        {
+            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
+            auto& pk = process_key();
+            ctx.init(pk.data(), pk.size());
+            ctx.update(nonce_.data(), nonce_.size());
+            ctx.final(subkey, sizeof subkey);
+        }
         std::vector<uint8_t> tmp(ct_);
         PageLockGuard g1(tmp.data(), tmp.size());
-        PageLockGuard g2(subkey.data(), subkey.size());
-        xor_keystream_inplace_with_key(tmp.data(), tmp.size(), nonce_.data(), subkey.data(), subkey.size());
+        xor_keystream_inplace_with_key(tmp.data(), tmp.size(), nonce_.data(), subkey, sizeof subkey);
         fn(tmp.data(), tmp.size());
         secure_zero(tmp.data(), tmp.size());
-        secure_zero(subkey.data(), subkey.size());
+        secure_zero(subkey, sizeof subkey);
         return true;
     }
 
@@ -90,6 +107,60 @@ public:
             if (n) std::memcpy(&out[0], p, n);
         });
         return out;
+    }
+
+    void rekey_runtime() {
+        if (ct_.empty()) return;
+
+        uint8_t oldk[32], newk[32];
+        auto& pk = process_key();
+        {
+            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
+            ctx.init(pk.data(), pk.size());
+            ctx.update(nonce_.data(), nonce_.size());
+            ctx.final(oldk, sizeof oldk);
+        }
+
+        {
+            auto rnd = hmac_cpp::random_bytes(pk.size());
+            std::copy(rnd.begin(), rnd.end(), pk.begin());
+        }
+
+        {
+            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
+            ctx.init(pk.data(), pk.size());
+            ctx.update(nonce_.data(), nonce_.size());
+            ctx.final(newk, sizeof newk);
+        }
+
+        uint8_t msg[16]; std::memcpy(msg, nonce_.data(), 12);
+        uint32_t ctr = 0;
+        uint8_t oldb[32], newb[32];
+
+        size_t pos = 0;
+        while (pos < ct_.size()) {
+            be32(msg + 12, ctr++);
+
+            HmacContext c1(hmac_cpp::TypeHash::SHA256);
+            c1.init(oldk, sizeof oldk);
+            c1.update(msg, sizeof msg);
+            c1.final(oldb, sizeof oldb);
+
+            HmacContext c2(hmac_cpp::TypeHash::SHA256);
+            c2.init(newk, sizeof newk);
+            c2.update(msg, sizeof msg);
+            c2.final(newb, sizeof newb);
+
+            const size_t take = (ct_.size() - pos < sizeof oldb) ? (ct_.size() - pos) : sizeof oldb;
+            for (size_t i = 0; i < take; ++i) ct_[pos + i] ^= (oldb[i] ^ newb[i]);
+            pos += take;
+        }
+
+        secure_zero(oldk, sizeof oldk);
+        secure_zero(newk, sizeof newk);
+        secure_zero(oldb, sizeof oldb);
+        secure_zero(newb, sizeof newb);
+        secure_zero(msg, sizeof msg);
     }
 
 private:
@@ -114,32 +185,73 @@ private:
     static void xor_keystream_inplace_with_key(uint8_t* buf, size_t len,
                                                const uint8_t* nonce12,
                                                const uint8_t* subkey, size_t sublen) {
-        if (!buf && len) return;
-        if (!nonce12) return;
-        if (!subkey || sublen != 32) return;
+        if (len && (!buf || !nonce12 || !subkey || sublen != 32)) return;
 
-        uint8_t msg[16];
-        std::memcpy(msg, nonce12, 12);
+        uint8_t msg[16]; std::memcpy(msg, nonce12, 12);
+        uint32_t ctr = 0;
+        uint8_t block[32];
 
         size_t pos = 0;
-        uint32_t ctr = 0;
         while (pos < len) {
             be32(msg + 12, ctr++);
-            std::vector<uint8_t> block = hmac_cpp::get_hmac(subkey, 32, msg, sizeof(msg),
-                                                            hmac_cpp::TypeHash::SHA256);
-            const size_t take = (len - pos < block.size()) ? (len - pos) : block.size();
+
+            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
+            ctx.init(subkey, 32);
+            ctx.update(msg, sizeof msg);
+            ctx.final(block, sizeof block);
+
+            const size_t take = (len - pos < sizeof block) ? (len - pos) : sizeof block;
             for (size_t i = 0; i < take; ++i) buf[pos + i] ^= block[i];
             pos += take;
-            secure_zero(block.data(), block.size());
         }
-        secure_zero(msg, sizeof(msg));
+        secure_zero(block, sizeof block);
+        secure_zero(msg, sizeof msg);
     }
 
     void xor_keystream_inplace(uint8_t* buf, size_t len, const uint8_t* nonce12) const {
-        std::vector<uint8_t> subkey = hmac_cpp::get_hmac(process_key().data(), process_key().size(),
-                                                         nonce12, 12, hmac_cpp::TypeHash::SHA256);
-        xor_keystream_inplace_with_key(buf, len, nonce12, subkey.data(), subkey.size());
-        secure_zero(subkey.data(), subkey.size());
+        uint8_t subkey[32];
+        {
+            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
+            auto& pk = process_key();
+            ctx.init(pk.data(), pk.size());
+            ctx.update(nonce12, 12);
+            ctx.final(subkey, sizeof subkey);
+        }
+        xor_keystream_inplace_with_key(buf, len, nonce12, subkey, sizeof subkey);
+        secure_zero(subkey, sizeof subkey);
+    }
+
+    void xor_keystream_copy_inplace(uint8_t* out, const uint8_t* in, size_t len, const uint8_t* nonce12) const {
+        uint8_t subkey[32];
+        {
+            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
+            auto& pk = process_key();
+            ctx.init(pk.data(), pk.size());
+            ctx.update(nonce12, 12);
+            ctx.final(subkey, sizeof subkey);
+        }
+
+        uint8_t msg[16]; std::memcpy(msg, nonce12, 12);
+        uint32_t ctr = 0;
+        uint8_t block[32];
+
+        size_t pos = 0;
+        while (pos < len) {
+            be32(msg + 12, ctr++);
+
+            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
+            ctx.init(subkey, 32);
+            ctx.update(msg, sizeof msg);
+            ctx.final(block, sizeof block);
+
+            const size_t take = (len - pos < sizeof block) ? (len - pos) : sizeof block;
+            for (size_t i = 0; i < take; ++i) out[pos + i] = in[pos + i] ^ block[i];
+            pos += take;
+        }
+
+        secure_zero(block, sizeof block);
+        secure_zero(msg, sizeof msg);
+        secure_zero(subkey, sizeof subkey);
     }
 
     void move_from(secret_string& other) noexcept {
