@@ -27,14 +27,14 @@ namespace hmac_cpp {
 /// Memory locking is best-effort and may fail without required privileges.
 class secret_string {
 public:
-    secret_string() : nonce_(), locked_(false) {}
+    secret_string() : nonce_(), tag_(), locked_(false) {}
 
-    explicit secret_string(const std::string& s) : nonce_(), locked_(false) { set(s); }
-    explicit secret_string(const uint8_t* p, size_t n) : nonce_(), locked_(false) { set(p, n); }
-    explicit secret_string(const secure_buffer<uint8_t>& s) : nonce_(), locked_(false) { set(s); }
-    explicit secret_string(secure_buffer<uint8_t>&& s) : nonce_(), locked_(false) { set(std::move(s)); }
+    explicit secret_string(const std::string& s) : nonce_(), tag_(), locked_(false) { set(s); }
+    explicit secret_string(const uint8_t* p, size_t n) : nonce_(), tag_(), locked_(false) { set(p, n); }
+    explicit secret_string(const secure_buffer<uint8_t>& s) : nonce_(), tag_(), locked_(false) { set(s); }
+    explicit secret_string(secure_buffer<uint8_t>&& s) : nonce_(), tag_(), locked_(false) { set(std::move(s)); }
 
-    secret_string(secret_string&& other) noexcept { move_from(other); }
+    secret_string(secret_string&& other) noexcept : ct_(), nonce_(), tag_(), locked_(false) { move_from(other); }
     secret_string& operator=(secret_string&& other) noexcept {
         if (this != &other) { clear(); move_from(other); }
         return *this;
@@ -53,8 +53,10 @@ public:
                 locked_ = false;
             }
             ct_.clear();
+            ct_.shrink_to_fit();
         }
         secure_zero(nonce_.data(), nonce_.size());
+        secure_zero(tag_.data(), tag_.size());
     }
 
     bool empty() const noexcept { return ct_.empty(); }
@@ -79,10 +81,37 @@ public:
         ct_.resize(n);
         if (n) locked_ = lock_pages(ct_.data(), ct_.size());
 
-        xor_keystream_copy_inplace(ct_.data(), p, n, nonce_.data());
-    }
+        xor_keystream_copy(ct_.data(), p, n, nonce_.data());
 
-    bool with_plaintext(const std::function<void(const uint8_t*, size_t)>& fn) const {
+        HmacContext c(hmac_cpp::TypeHash::SHA256);
+        auto& pk = process_key();
+        c.init(pk.data(), pk.size());
+        c.update(nonce_.data(), nonce_.size());
+        if (n) c.update(ct_.data(), ct_.size());
+        c.final(tag_.data(), tag_.size());
+    }
+ 
+    // Not thread-safe if called concurrently with set() or rotate_nonce().
+    void with_plaintext(const std::function<void(const uint8_t*, size_t)>& fn) const {
+        if (ct_.empty()) {
+            fn(nullptr, 0);
+            return;
+        }
+
+        uint8_t expected[32];
+        {
+            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
+            auto& pk = process_key();
+            ctx.init(pk.data(), pk.size());
+            ctx.update(nonce_.data(), nonce_.size());
+            ctx.update(ct_.data(), ct_.size());
+            ctx.final(expected, sizeof expected);
+        }
+        if (!std::equal(tag_.begin(), tag_.end(), expected)) {
+            secure_zero(expected, sizeof expected);
+            throw std::runtime_error("secret_string::with_plaintext: integrity check failed");
+        }
+
         uint8_t subkey[32];
         {
             HmacContext ctx(hmac_cpp::TypeHash::SHA256);
@@ -97,9 +126,10 @@ public:
         fn(tmp.data(), tmp.size());
         secure_zero(tmp.data(), tmp.size());
         secure_zero(subkey, sizeof subkey);
-        return true;
+        secure_zero(expected, sizeof expected);
     }
 
+    // Not thread-safe if called concurrently with set() or rotate_nonce().
     std::string reveal_copy() const {
         std::string out;
         out.resize(ct_.size());
@@ -109,58 +139,71 @@ public:
         return out;
     }
 
-    void rekey_runtime() {
+    void rotate_nonce() {
         if (ct_.empty()) return;
+
+        std::array<uint8_t,12> new_nonce{};
+        {
+            auto rnd = hmac_cpp::random_bytes(new_nonce.size());
+            std::copy(rnd.begin(), rnd.end(), new_nonce.begin());
+        }
 
         uint8_t oldk[32], newk[32];
         auto& pk = process_key();
-        {
-            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
-            ctx.init(pk.data(), pk.size());
-            ctx.update(nonce_.data(), nonce_.size());
-            ctx.final(oldk, sizeof oldk);
-        }
 
         {
-            auto rnd = hmac_cpp::random_bytes(pk.size());
-            std::copy(rnd.begin(), rnd.end(), pk.begin());
+            HmacContext c(hmac_cpp::TypeHash::SHA256);
+            c.init(pk.data(), pk.size());
+            c.update(nonce_.data(), nonce_.size());
+            c.final(oldk, sizeof oldk);
         }
-
         {
-            HmacContext ctx(hmac_cpp::TypeHash::SHA256);
-            ctx.init(pk.data(), pk.size());
-            ctx.update(nonce_.data(), nonce_.size());
-            ctx.final(newk, sizeof newk);
+            HmacContext c(hmac_cpp::TypeHash::SHA256);
+            c.init(pk.data(), pk.size());
+            c.update(new_nonce.data(), new_nonce.size());
+            c.final(newk, sizeof newk);
         }
 
-        uint8_t msg[16]; std::memcpy(msg, nonce_.data(), 12);
         uint32_t ctr = 0;
-        uint8_t oldb[32], newb[32];
+        uint8_t msg_old[16], msg_new[16], blk_old[32], blk_new[32];
+        std::memcpy(msg_old, nonce_.data(), nonce_.size());
+        std::memcpy(msg_new, new_nonce.data(), new_nonce.size());
 
-        size_t pos = 0;
-        while (pos < ct_.size()) {
-            be32(msg + 12, ctr++);
+        for (size_t pos = 0; pos < ct_.size();) {
+            be32(msg_old + 12, ctr);
+            be32(msg_new + 12, ctr);
+            ++ctr;
 
             HmacContext c1(hmac_cpp::TypeHash::SHA256);
             c1.init(oldk, sizeof oldk);
-            c1.update(msg, sizeof msg);
-            c1.final(oldb, sizeof oldb);
+            c1.update(msg_old, sizeof msg_old);
+            c1.final(blk_old, sizeof blk_old);
 
             HmacContext c2(hmac_cpp::TypeHash::SHA256);
             c2.init(newk, sizeof newk);
-            c2.update(msg, sizeof msg);
-            c2.final(newb, sizeof newb);
+            c2.update(msg_new, sizeof msg_new);
+            c2.final(blk_new, sizeof blk_new);
 
-            const size_t take = (ct_.size() - pos < sizeof oldb) ? (ct_.size() - pos) : sizeof oldb;
-            for (size_t i = 0; i < take; ++i) ct_[pos + i] ^= (oldb[i] ^ newb[i]);
+            const size_t take = std::min(ct_.size() - pos, sizeof blk_old);
+            for (size_t i = 0; i < take; ++i)
+                ct_[pos + i] ^= (blk_old[i] ^ blk_new[i]);
             pos += take;
         }
 
         secure_zero(oldk, sizeof oldk);
         secure_zero(newk, sizeof newk);
-        secure_zero(oldb, sizeof oldb);
-        secure_zero(newb, sizeof newb);
-        secure_zero(msg, sizeof msg);
+        secure_zero(blk_old, sizeof blk_old);
+        secure_zero(blk_new, sizeof blk_new);
+        secure_zero(msg_old, sizeof msg_old);
+        secure_zero(msg_new, sizeof msg_new);
+
+        nonce_ = new_nonce;
+
+        HmacContext c(hmac_cpp::TypeHash::SHA256);
+        c.init(pk.data(), pk.size());
+        c.update(nonce_.data(), nonce_.size());
+        if (!ct_.empty()) c.update(ct_.data(), ct_.size());
+        c.final(tag_.data(), tag_.size());
     }
 
 private:
@@ -221,7 +264,7 @@ private:
         secure_zero(subkey, sizeof subkey);
     }
 
-    void xor_keystream_copy_inplace(uint8_t* out, const uint8_t* in, size_t len, const uint8_t* nonce12) const {
+    void xor_keystream_copy(uint8_t* out, const uint8_t* in, size_t len, const uint8_t* nonce12) const {
         uint8_t subkey[32];
         {
             HmacContext ctx(hmac_cpp::TypeHash::SHA256);
@@ -257,14 +300,17 @@ private:
     void move_from(secret_string& other) noexcept {
         ct_     = std::move(other.ct_);
         nonce_  = other.nonce_;
+        tag_    = other.tag_;
         locked_ = other.locked_;
         other.locked_ = false;
         secure_zero(other.nonce_.data(), other.nonce_.size());
+        secure_zero(other.tag_.data(), other.tag_.size());
     }
 
 private:
     std::vector<uint8_t>   ct_;
     std::array<uint8_t,12> nonce_;
+    std::array<uint8_t,32> tag_;
     bool                   locked_;
 };
 

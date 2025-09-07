@@ -770,6 +770,27 @@ TEST(SecretStringTest, MoveSemantics) {
     EXPECT_EQ(b.reveal_copy(), "abc");
 }
 
+TEST(SecretStringTest, NonceRotationPreservesPlaintext) {
+    hmac_cpp::secret_string s("nonce-test");
+    s.rotate_nonce();
+    EXPECT_EQ(s.reveal_copy(), "nonce-test");
+}
+
+TEST(SecretStringTest, IntegrityCheckFailsOnTamper) {
+    hmac_cpp::secret_string s("tamper");
+    struct SecretStringAccessor {
+        std::vector<uint8_t> ct;
+        std::array<uint8_t,12> nonce;
+        std::array<uint8_t,32> tag;
+        bool locked;
+    };
+    auto* hack = reinterpret_cast<SecretStringAccessor*>(&s);
+    hack->tag[0] ^= 0x01;
+    EXPECT_THROW({
+        s.with_plaintext([](const uint8_t*, size_t){});
+    }, std::runtime_error);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
