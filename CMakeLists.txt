@@ -7,6 +7,9 @@ option(HMACCPP_BUILD_BENCH "Build benchmarks" OFF)
 option(HMACCPP_BUILD_SHARED "Build hmac_cpp as a shared library" OFF)
 option(HMACCPP_ENABLE_MLOCK "Pin secret buffers in RAM using mlock/VirtualLock" ON)
 
+include(CheckSymbolExists)
+check_symbol_exists(explicit_bzero "strings.h" HAVE_EXPLICIT_BZERO)
+
 if(HMACCPP_BUILD_SHARED)
     set(BUILD_SHARED_LIBS ON)
 endif()
@@ -45,11 +48,15 @@ target_include_directories(hmac_cpp PUBLIC
 if(BUILD_SHARED_LIBS)
     target_compile_definitions(hmac_cpp PRIVATE HMAC_CPP_BUILD)
 else()
-    target_compile_definitions(hmac_cpp PUBLIC HMAC_CPP_STATIC)
+target_compile_definitions(hmac_cpp PUBLIC HMAC_CPP_STATIC)
 endif()
 
 if(HMACCPP_ENABLE_MLOCK)
     target_compile_definitions(hmac_cpp PUBLIC HMAC_CPP_ENABLE_MLOCK)
+endif()
+
+if(HAVE_EXPLICIT_BZERO)
+    target_compile_definitions(hmac_cpp PUBLIC HAVE_EXPLICIT_BZERO)
 endif()
 
 if(MSVC)
