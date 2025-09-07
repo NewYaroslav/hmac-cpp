@@ -382,8 +382,9 @@ cl /EHsc example.cpp /I _install\include /link /LIBPATH:_install\lib hmac_cpp.li
 
 ## 🔒 Security notes
 
-`secure_buffer` wipes its memory on destruction. It does not page‑lock buffers,
-provide guard pages, or mitigate neighboring memory attacks.
+`secure_buffer` wipes its memory on destruction and zeroizes truncated bytes on
+resize. It does not page‑lock buffers, provide guard pages, or mitigate
+neighboring memory attacks.
 
 ---
 

@@ -1,12 +1,18 @@
 #ifndef HMAC_CPP_SECURE_BUFFER_HPP
 #define HMAC_CPP_SECURE_BUFFER_HPP
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <vector>
 #include <type_traits>
 #include <string>
 #include "hmac_cpp/memlock.hpp"
+
+#if defined(HAVE_EXPLICIT_BZERO)
+#include <strings.h>
+#endif
 
 // Macro to mark deprecated APIs in a compiler-portable way
 #ifndef HMACCPP_DEPRECATED
@@ -25,10 +31,17 @@ namespace hmac_cpp {
 /// \param ptr Pointer to the memory to wipe.
 /// \param len Number of bytes to set to zero.
 inline void secure_zero(void* ptr, size_t len) {
+#if defined(__STDC_LIB_EXT1__)
+    (void)memset_s(ptr, len, 0, len);
+#elif defined(HAVE_EXPLICIT_BZERO)
+    explicit_bzero(ptr, len);
+#else
     volatile unsigned char* p = static_cast<volatile unsigned char*>(ptr);
     while (len--) {
         *p++ = 0;
     }
+    std::atomic_signal_fence(std::memory_order_seq_cst);
+#endif
 }
 
 /// \brief Vector-like buffer that zeroizes its contents on destruction.
@@ -114,10 +127,63 @@ struct secure_buffer {
     }
 
     /// \brief Zeroize contents on destruction.
-    ~secure_buffer() {
+    ~secure_buffer() noexcept { clear(); }
+
+    /// \brief Check whether pages are locked.
+    bool is_locked() const noexcept { return locked_; }
+
+    /// \brief Clear and deallocate the buffer.
+    void clear() noexcept {
         secure_zero(buf.data(), buf.size() * sizeof(T));
         if (locked_) {
             unlock_pages(buf.data(), buf.size() * sizeof(T));
+            locked_ = false;
+        }
+        buf.clear();
+        buf.shrink_to_fit();
+    }
+
+    /// \brief Resize the buffer, zeroizing truncated data.
+    void resize(size_t n) {
+        T* old_ptr = buf.data();
+        size_t old_sz = buf.size();
+        if (n < old_sz) {
+            secure_zero(old_ptr + n, (old_sz - n) * sizeof(T));
+        }
+        buf.resize(n);
+        if (LockOnAlloc && old_ptr != buf.data()) {
+            if (locked_) {
+                unlock_pages(old_ptr, old_sz * sizeof(T));
+            }
+            if (!buf.empty()) {
+                locked_ = lock_pages(buf.data(), buf.size() * sizeof(T));
+            } else {
+                locked_ = false;
+            }
+        }
+    }
+
+    /// \brief Assign from raw pointer.
+    void assign(const T* p, size_t n) {
+        secure_zero(buf.data(), buf.size() * sizeof(T));
+        if (locked_) {
+            unlock_pages(buf.data(), buf.size() * sizeof(T));
+        }
+        buf.assign(p, p + n);
+        if (LockOnAlloc && !buf.empty()) {
+            locked_ = lock_pages(buf.data(), buf.size() * sizeof(T));
+        } else {
+            locked_ = false;
+        }
+    }
+
+    /// \brief Assign from std::string rvalue and zeroize the source.
+    template<class U = T, typename std::enable_if<std::is_same<U, uint8_t>::value, int>::type = 0>
+    void assign(std::string&& s) {
+        assign(reinterpret_cast<const uint8_t*>(s.data()), s.size());
+        if (!s.empty()) {
+            secure_zero(&s[0], s.size());
+            s.clear();
         }
     }
 
