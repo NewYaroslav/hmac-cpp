@@ -1,0 +1,11 @@
+{
+  "name": "hmac-cpp",
+  "version": "0.5.0",
+  "homepage": "https://github.com/NewYaroslav/hmac-cpp",
+  "description": "C++ implementation of HMAC and SHA algorithms",
+  "license": "MIT",
+  "dependencies": [
+    "vcpkg-cmake",
+    "vcpkg-cmake-config"
+  ]
+}
