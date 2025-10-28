@@ -1,0 +1,31 @@
+name: secure_zero ODR check
+
+on:
+  push
+
+jobs:
+  secure-zero-odr-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make
+
+      - name: Build secure_zero ODR test
+        run: |
+          mkdir -p build-tests
+          g++ -std=c++17 -O2 -Wall -Wextra \
+            tests/odr/main.cpp \
+            tests/odr/tu_manual.cpp \
+            tests/odr/tu_memsets.cpp \
+            -Iinclude \
+            -o build-tests/secure_zero_test
+
+      - name: Run secure_zero ODR test
+        run: |
+          ./build-tests/secure_zero_test
