@@ -1,6 +1,8 @@
 #include <array>
 #include <cstddef>
 
+extern "C" int memset_s(void* dest, size_t destsz, int ch, size_t count);
+
 #define __STDC_WANT_LIB_EXT1__ 1
 #define __STDC_LIB_EXT1__ 1
 #undef HAVE_EXPLICIT_BZERO
