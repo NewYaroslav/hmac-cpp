@@ -14,15 +14,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential
 
-      - name: Check inline API decorations
-        run: |
-          if rg --no-heading --line-number "^\s*inline[^{;]*HMAC_CPP_API" include; then
-            echo "Detected inline functions annotated with HMAC_CPP_API (expected failure)"
-          else
-            echo "No inline functions annotated with HMAC_CPP_API were found"
-            exit 1
-          fi
-
       - name: Build secure_zero conflict sample
         run: |
           g++ -std=c++11 -Wall -Wextra -pedantic -DHMAC_CPP_STATIC -Iinclude \
