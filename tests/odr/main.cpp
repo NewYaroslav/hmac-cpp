@@ -1,16 +1,18 @@
 #include <iostream>
 
-extern "C" int secure_zero_branch_memsets();
-extern "C" int secure_zero_branch_manual();
+extern "C" bool secure_zero_memset_s_branch();
+extern "C" bool secure_zero_explicit_bzero_branch();
 
 int main() {
-    const auto a = secure_zero_branch_memsets();
-    const auto b = secure_zero_branch_manual();
-    if (a == b) {
-        std::cout << "secure_zero branch matches across TUs: " << a << "\n";
-        return 0;
-    }
+    const bool memset_ok = secure_zero_memset_s_branch();
+    const bool explicit_ok = secure_zero_explicit_bzero_branch();
 
-    std::cout << "secure_zero branch mismatch across TUs: " << a << " vs " << b << "\n";
-    return 1;
+    if (!memset_ok || !explicit_ok) {
+        std::cout << "secure_zero failed: memset_s=" << memset_ok
+                  << ", explicit_bzero=" << explicit_ok << "\n";
+        return 1;
+	}
+	
+	std::cout << "secure_zero zeroed buffers across translation units\n";
+    return 0;
 }

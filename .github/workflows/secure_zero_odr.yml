@@ -13,20 +13,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential
-
-      - name: Build secure_zero conflict sample
+          
+      - name: Build secure_zero ODR sample
         run: |
           g++ -std=c++11 -Wall -Wextra -pedantic -DHMAC_CPP_STATIC -Iinclude \
             tests/odr/main.cpp \
-            tests/odr/tu_memsets.cpp \
-            tests/odr/tu_manual.cpp \
-            tests/odr/stubs.cpp \
-            -o secure_zero_conflict
-
-      - name: Expect secure_zero mismatch
-        run: |
-          if ./secure_zero_conflict; then
-            echo "secure_zero conflict binary unexpectedly succeeded"
-            exit 1
-          fi
-          echo "secure_zero conflict binary correctly reported mismatch"
+            tests/odr/tu_memset.cpp \
+            tests/odr/tu_explicit.cpp \
+            tests/odr/platform_stubs.cpp \
+            -o secure_zero_odr
+            
+      - name: Run secure_zero ODR sample
+        run: ./secure_zero_odr
