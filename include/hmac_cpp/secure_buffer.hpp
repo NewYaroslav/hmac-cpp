@@ -30,7 +30,7 @@ namespace hmac_cpp {
 /// \brief Securely zeroes a memory region.
 /// \param ptr Pointer to the memory to wipe.
 /// \param len Number of bytes to set to zero.
-inline void secure_zero(void* ptr, size_t len) {
+static inline void secure_zero(void* ptr, size_t len) {
 #if defined(__STDC_LIB_EXT1__)
     (void)memset_s(ptr, len, 0, len);
 #elif defined(HAVE_EXPLICIT_BZERO)
